@@ -202,6 +202,17 @@ func initDb(db *sql.DB) {
     `)
 }
 
+type Time time.Time
+
+func (t *Time) Scan(v interface{}) error {
+    vt, err := time.Parse(time.RFC3339, string(v.(string)))
+    if err != nil {
+        return err
+    }
+    *t = Time(vt)
+    return nil
+}
+
 func main() {
     dbFilePath, _ := xdg.DataFile("track-cli/db.sqlite3")
     db, _ = sql.Open("sqlite3", dbFilePath)
@@ -341,8 +352,8 @@ func main() {
             },
 
             {
-                Name: "daily",
-                Usage: "output a daily report",
+                Name: "log",
+                Usage: "display time spent on tasks",
                 Flags: []cli.Flag{
                     &cli.StringFlag{
                         Name: "from",
@@ -351,6 +362,14 @@ func main() {
                     &cli.StringFlag{
                         Name: "to",
                         Aliases: []string{"t"},
+                    },
+                    &cli.StringFlag{
+                        Name: "project",
+                        Aliases: []string{"p"},
+                    },
+                    &cli.StringFlag{
+                        Name: "task",
+                        Aliases: []string{"T"},
                     },
                 },
                 Action: func(c *cli.Context) error {
@@ -362,7 +381,101 @@ func main() {
                     if v := c.String("to"); v != "" {
                         to = timeFromShorthand(v)
                     }
-                    fmt.Printf("from: %s, and to: %s", from.Format(time.RFC3339), to.Format(time.RFC3339))
+
+                    query := `
+                        select
+                            p.name,
+                            t.name,
+                            sum(strftime("%s", end_time) - strftime("%s", start_time)) as total,
+                            min(start_time) as start_date,
+                            max(end_time) as end_date,
+                            (
+                                select
+                                    sum(strftime("%s", end_time) - strftime("%s", start_time)) as total
+                                from frame f2
+                                left join task t on t.id = task_id
+                                left join project p on p.id = t.project_id
+                                where
+                                    f2.task_id = task_id
+                                group by t.project_id
+                            ) as project_total
+                        from frame f
+                        left join task t on t.id = task_id
+                        left join project p on p.id = t.project_id
+                    `
+                    query += `
+                        group by
+                            task_id
+                    `
+
+
+                    var params []interface{}
+                    var whereConds []string
+
+                    whereConds = append(whereConds, "start_date > ?")
+                    params = append(params, from.Format(time.RFC3339))
+
+                    whereConds = append(whereConds, "end_date < ?")
+                    params = append(params, to.Format(time.RFC3339))
+
+                    if p := c.String("project"); p != "" {
+                        whereConds = append(whereConds, "p.name like ?")
+                        params = append(params, "%" + p + "%")
+                    }
+
+                    if t := c.String("task"); t != "" {
+                        whereConds = append(whereConds, "t.name like ?")
+                        params = append(params, "%" + t + "%")
+                    }
+
+                    // Add where conditions to query
+                    if len(whereConds) != 0 {
+                        query += "having\n" + strings.Join(whereConds, "\nand\n")
+                    }
+
+                    rows, err := db.Query(query, params...)
+                    if err != nil {
+                        log.Fatal(err)
+                    }
+                    var prevProject string
+
+                    type row struct {
+                        projectName string
+                        taskName string
+                        totalDuration time.Duration
+                        startDate Time
+                        endDate Time
+                        projectDuration time.Duration
+                    }
+
+                    for rows.Next() {
+                        r := row{}
+                        rows.Scan(
+                            &r.projectName,
+                            &r.taskName,
+                            &r.totalDuration,
+                            (*Time)(&r.startDate),
+                            (*Time)(&r.endDate),
+                            &r.projectDuration,
+                        )
+                        r.totalDuration *= time.Second
+                        r.projectDuration *= time.Second
+                        if r.projectName != prevProject {
+                            hours := r.projectDuration.Hours()
+                            s := ""
+                            if hours != 1 {
+                                s = "s"
+                            }
+                            color.Printf("Project: <magenta>%s</> (%.2f hour%s)\n", r.projectName, hours, s)
+                            prevProject = r.projectName
+                        }
+                        hours := r.totalDuration.Hours()
+                        s := ""
+                        if hours != 1 {
+                            s = "s"
+                        }
+                        color.Printf("  <blue>%s</> (%.2f hour%s)\n", r.taskName, hours, s)
+                    }
                     return nil
                 },
             },
