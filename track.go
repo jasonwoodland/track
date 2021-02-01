@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"time"
+        "strings"
+        "github.com/gookit/color"
 
 	"github.com/adrg/xdg"
 	_ "github.com/mattn/go-sqlite3"
@@ -227,7 +229,7 @@ func main() {
             {
                 Name: "start",
                 Aliases: []string{"s"},
-                Usage: "start tracking time for a project task",
+                Usage: "start tracking time for a task",
                 ArgsUsage: "project task",
                 Flags: []cli.Flag{
                     &cli.StringFlag{
@@ -291,7 +293,7 @@ func main() {
             {
                 Name: "cancel",
                 Aliases: []string{"c"},
-                Usage: "cancel a started task",
+                Usage: "cancel a running task",
                 Action: func(c *cli.Context) error {
                     res, err := db.Exec("delete from frame where end_time is null")
                     if err != nil {
@@ -485,7 +487,7 @@ func main() {
                 Usage: "list projects",
                 Action: func(c *cli.Context) error {
                     for _, project := range getProjects() {
-                        fmt.Println(project.name)
+                        color.Magenta.Println(project.name)
                     }
                     return nil
                 },
