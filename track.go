@@ -263,7 +263,7 @@ func main() {
 
                     task := project.getTask(taskName)
                     if task == nil {
-                        fmt.Printf("adding task \"%s\"\n", taskName)
+                        color.Printf("adding task <blue>%s</>\n", taskName)
                         task = project.addTask(taskName)
                     }
 
@@ -276,7 +276,7 @@ func main() {
                     }
 
                     if c.String("in") == "" {
-                        fmt.Printf("started tracking time at %s\n", startTime.Format("15:04"))
+                        color.Printf("started tracking time at <green>%s</>\n", startTime.Format("15:04"))
                     } else {
                         fmt.Printf("will start tracking time at %s\n", startTime.Format("15:04"))
                     }
@@ -507,11 +507,11 @@ func main() {
                                 return nil
                             }
                             if getProjectByName(name) != nil {
-                                fmt.Printf("project \"%s\" already exists\n", name)
+                                color.Printf("project <magenta>%s</> already exists\n", name)
                                 return nil
                             }
                             db.Exec("insert into project (name) values ($1)", name)
-                            fmt.Printf("added project \"%s\"\n", name)
+                            color.Printf("added project <magenta>%s</>\n", name)
                             return nil
                         },
                     },
