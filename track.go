@@ -6,9 +6,9 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
-        "strconv"
 
 	"github.com/adrg/xdg"
 	"github.com/gookit/color"
@@ -161,6 +161,12 @@ func timeFromShorthand(v string) (t time.Time) {
         "01-02",
         "20060102",
         "2006-01-02",
+    }
+    if v[len(v) - 1] == 'd' {
+        days, _ := strconv.Atoi(strings.TrimSuffix(v, "d"))
+        t = time.Now().Add(time.Hour * 24 * time.Duration(days))
+        t = t.Round(time.Hour * 24)
+        return t
     }
     for _, l := range layouts {
         if (len(l) == len(v)) {
