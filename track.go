@@ -489,6 +489,10 @@ func main() {
                 Usage: "display status of running task",
                 Action: func(c *cli.Context) error {
                     state := getState()
+                    if !state.running {
+                        fmt.Println("No running task")
+                        return nil
+                    }
                     color.Printf("Running: <magenta>%s</> ", state.task.project.name)
                     hours := state.timeElapsed.Hours()
                     s := ""
