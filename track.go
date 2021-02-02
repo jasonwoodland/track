@@ -258,7 +258,7 @@ func main() {
 
                     project := getProjectByName(projectName)
                     if project == nil {
-                        fmt.Printf("project \"%s\" doesn't exists\n", projectName)
+                        color.Printf("project <magenta>%s</> doesn't exists\n", projectName)
                         return nil
                     }
 
