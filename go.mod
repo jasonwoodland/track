@@ -1,4 +1,4 @@
-module track
+module github.com/jasonwoodland/track
 
 go 1.16
 

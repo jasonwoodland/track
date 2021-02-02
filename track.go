@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
+	"strings"
 	"time"
-        "strings"
-        "github.com/gookit/color"
+        "strconv"
 
 	"github.com/adrg/xdg"
+	"github.com/gookit/color"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/urfave/cli/v2"
 )
@@ -166,7 +168,6 @@ func timeFromShorthand(v string) (t time.Time) {
             if err != nil {
                 log.Fatal(err)
             }
-            fmt.Printf("%v", t.Year())
             if t.Year() == 0 {
                 t = t.AddDate(time.Now().Year(), 0, 0)
             }
@@ -344,13 +345,203 @@ func main() {
                     }
 
                     if n, _ := res.RowsAffected(); n == 0 {
-                        fmt.Printf("no task started")
+                        fmt.Println("No task started")
                     } else {
-                        fmt.Printf("stopped tracking time at %s\n", endTime.Format("15:04"))
+                        color.Printf("Stopped tracking time at <green>%s</>\n", endTime.Format("15:04"))
                         dur := endTime.Sub(state.startTime)
-                        fmt.Printf("duration: %s\n", dur.Round(time.Second))
+                        hours := dur.Hours()
+                        s := ""
+                        if hours != 1 {
+                            s = "s"
+                        }
+                        fmt.Printf("Duration: %.2f hour%s (%s)\n", hours, s, dur.Round(time.Second))
                     }
 
+                    return nil
+                },
+            },
+
+            {
+                Name: "timeline",
+                Usage: "display a timeline showing time spent on tasks",
+                Flags: []cli.Flag{
+                    &cli.StringFlag{
+                        Name: "from",
+                        Aliases: []string{"f"},
+                        Required: true,
+                    },
+                    &cli.StringFlag{
+                        Name: "to",
+                        Aliases: []string{"t"},
+                    },
+                    &cli.StringFlag{
+                        Name: "project",
+                        Aliases: []string{"p"},
+                    },
+                    &cli.StringFlag{
+                        Name: "task",
+                        Aliases: []string{"T"},
+                    },
+                },
+                Action: func(c *cli.Context) error {
+                    from := time.Time{}
+                    to := time.Now()
+                    if v := c.String("from"); v != "" {
+                        from = timeFromShorthand(v)
+                    }
+                    if v := c.String("to"); v != "" {
+                        to = timeFromShorthand(v)
+                    }
+
+                    query := `
+                        with recursive date(d) as (
+                            select datetime(?)
+                            union all
+                            select datetime(d, '+1 day') from date where d < ?
+                        )
+                        select
+                            d,
+                            p.id,
+                            p.name,
+                            t.id,
+                            t.name
+                        from date
+                        left join frame f on f.start_time > date.d and f.end_time < datetime(d, '+1 day')
+                        left join task t on t.id = f.task_id
+                        left join project p on p.id = t.project_id
+                    `
+
+
+                    var params []interface{}
+                    var whereConds []string
+
+                    params = append(params, from.Format(time.RFC3339))
+                    params = append(params, to.Format(time.RFC3339))
+
+                    if p := c.String("project"); p != "" {
+                        whereConds = append(whereConds, "p.name like ?")
+                        params = append(params, "%" + p + "%")
+                    }
+
+                    if t := c.String("task"); t != "" {
+                        whereConds = append(whereConds, "t.name like ?")
+                        params = append(params, "%" + t + "%")
+                    }
+
+                    // Add where conditions to query
+                    if len(whereConds) != 0 {
+                        query += "having\n" + strings.Join(whereConds, "\nand\n")
+                    }
+
+                    rows, err := db.Query(query, params...)
+                    if err != nil {
+                        log.Fatal(err)
+                    }
+                    var chart = make(map[string]map[int]bool)
+                    var taskIds []int
+                    var taskNames = make(map[int]string)
+
+                    for rows.Next() {
+                        var date string
+                        var projectId int64
+                        var projectName string
+                        var taskId int
+                        var taskName string
+
+                        rows.Scan(
+                            &date,
+                            &projectId,
+                            &projectName,
+                            &taskId,
+                            &taskName,
+                        )
+                        var i int
+                        var f bool
+
+                        // Set the row index
+                        for ix, tid := range taskIds {
+                            if tid == taskId {
+                                i = ix
+                                f = true
+                                break
+                            }
+                        }
+                        if chart[date] == nil {
+                            chart[date] = make(map[int]bool)
+                        }
+                        if taskId == 0 {
+                            continue
+                        }
+                        if !f {
+                            taskIds = append(taskIds, taskId)
+                            taskNames[taskId] = taskName
+                            i = len(taskIds) - 1
+                        }
+                        chart[date][i] = true
+                    }
+
+                    longest := 0
+                    for _, t := range taskNames {
+                        if len(t) > longest {
+                            longest = len(t)
+                        }
+                    }
+
+                    dates := make([]string, 0, len(chart))
+                    for d := range chart {
+                        dates = append(dates, d)
+                    }
+                    sort.Strings(dates)
+
+                    fmt.Printf("%-" + strconv.Itoa(longest) +"v ", "")
+                    for _, date := range dates {
+                        d, _ := time.Parse("2006-01-02 00:00:00", date)
+                        color.Printf("<gray>%3v</>", d.Day())
+
+                    }
+                    fmt.Printf("\n")
+
+                    for _, taskId := range taskIds {
+                        color.Printf("<blue>%-" + strconv.Itoa(longest) +"v</> <gray>┃</>", taskNames[taskId], )
+                        for di, date := range dates {
+                            if chart[date][taskId] {
+                                prev := chart[dates[di - 1]][taskId]
+                                next := chart[dates[di + 1]][taskId]
+                                if prev && next {
+                                    color.Printf("<green>━━━</>")
+                                } else if prev {
+                                    color.Printf("<green>━● </>")
+                                } else if next {
+                                    color.Printf("<green> ●━</>")
+                                } else {
+                                    color.Printf("<green> ● </>")
+                                }
+                                // if prev && next {
+                                //     color.Printf("<green>━━━</>")
+                                // } else if prev {
+                                //     color.Printf("<green>━━╸</>")
+                                // } else if next {
+                                //     color.Printf("<green>╺━━</>")
+                                // } else {
+                                //     color.Printf("<green>╺━╸</>")
+                                // }
+                            } else {
+                                fmt.Printf("   ")
+                            }
+                        }
+                        color.Printf("<gray>┃</>\n")
+                    }
+                    // for _, date := range dates {
+                    //     row := chart[date]
+                    //     fmt.Printf("%s ", date)
+                    //     for _, taskId := range taskIds {
+                    //         if row[taskId] {
+                    //             fmt.Printf("x")
+                    //         } else {
+                    //             fmt.Printf(" ")
+                    //         }
+                    //     }
+                    // }
                     return nil
                 },
             },
