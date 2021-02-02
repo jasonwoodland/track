@@ -252,19 +252,19 @@ func main() {
 
                     state := getState()
                     if state != nil && state.running {
-                        fmt.Println("task already running")
+                        fmt.Println("Task already running")
                         return nil
                     }
 
                     project := getProjectByName(projectName)
                     if project == nil {
-                        color.Printf("project <magenta>%s</> doesn't exists\n", projectName)
+                        color.Printf("Project <magenta>%s</> doesn't exists\n", projectName)
                         return nil
                     }
 
                     task := project.getTask(taskName)
                     if task == nil {
-                        color.Printf("adding task <blue>%s</>\n", taskName)
+                        color.Printf("Adding task <blue>%s</>\n", taskName)
                         task = project.addTask(taskName)
                     }
 
@@ -277,9 +277,9 @@ func main() {
                     }
 
                     if c.String("in") == "" {
-                        color.Printf("started tracking time at <green>%s</>\n", startTime.Format("15:04"))
+                        color.Printf("Started tracking time at <green>%s</>\n", startTime.Format("15:04"))
                     } else {
-                        fmt.Printf("will start tracking time at %s\n", startTime.Format("15:04"))
+                        fmt.Printf("Will start tracking time at %s\n", startTime.Format("15:04"))
                     }
 
                     db.Exec(
@@ -303,9 +303,9 @@ func main() {
                     }
                     n, err := res.RowsAffected()
                     if n == 0 {
-                        fmt.Println("no task started")
+                        fmt.Println("No task started")
                     } else {
-                        fmt.Println("task cancelled")
+                        fmt.Println("Task cancelled")
                     }
                     return nil
                 },
@@ -526,11 +526,11 @@ func main() {
                                 return nil
                             }
                             if getProjectByName(name) != nil {
-                                color.Printf("project <magenta>%s</> already exists\n", name)
+                                color.Printf("Project <magenta>%s</> already exists\n", name)
                                 return nil
                             }
                             db.Exec("insert into project (name) values ($1)", name)
-                            color.Printf("added project <magenta>%s</>\n", name)
+                            color.Printf("Added project <magenta>%s</>\n", name)
                             return nil
                         },
                     },
@@ -546,11 +546,11 @@ func main() {
                                 return nil
                             }
                             if getProjectByName(oldName) == nil {
-                                fmt.Printf("project \"%s\" doesn't exists\n", oldName)
+                                color.Printf("Project <magenta>%s</> doesn't exists\n", oldName)
                                 return nil
                             }
                             db.Exec("update project set name = $1 where name = $2", newName, oldName)
-                            fmt.Printf("renamed project \"%s\" to \"%s\"\n", oldName, newName)
+                            color.Printf("Renamed project <magenta>%s</> to <magenta>%s</>\n", oldName, newName)
                             return nil
                         },
                     },
@@ -566,11 +566,11 @@ func main() {
                                 return nil
                             }
                             if getProjectByName(name) == nil {
-                                fmt.Printf("project \"%s\" doesn't exists\n", name)
+                                color.Printf("Project <magenta>%s</> doesn't exists\n", name)
                                 return nil
                             }
                             db.Exec("delete from project where name = $1", name)
-                            fmt.Printf("deleted project \"%s\"\n", name)
+                            color.Printf("Deleted project <magenta>%s</>\n", name)
                             return nil
                         },
                     },
