@@ -164,7 +164,25 @@ func timeFromShorthand(v string) (t time.Time) {
     }
     if v[len(v) - 1] == 'd' {
         days, _ := strconv.Atoi(strings.TrimSuffix(v, "d"))
-        t = time.Now().Add(time.Hour * 24 * time.Duration(days))
+        t = time.Now().AddDate(0, 0, days)
+        t = t.Round(time.Hour * 24)
+        return t
+    }
+    if v[len(v) - 1] == 'w' {
+        weeks, _ := strconv.Atoi(strings.TrimSuffix(v, "w"))
+        t = time.Now().AddDate(0, 0, weeks * 7)
+        t = t.Round(time.Hour * 24)
+        return t
+    }
+    if v[len(v) - 1] == 'm' {
+        months, _ := strconv.Atoi(strings.TrimSuffix(v, "m"))
+        t = time.Now().AddDate(0, months, 0)
+        t = t.Round(time.Hour * 24)
+        return t
+    }
+    if v[len(v) - 1] == 'y' {
+        years, _ := strconv.Atoi(strings.TrimSuffix(v, "y"))
+        t = time.Now().AddDate(years, 0, 0)
         t = t.Round(time.Hour * 24)
         return t
     }
