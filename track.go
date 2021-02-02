@@ -297,6 +297,7 @@ func main() {
                 Usage: "cancel a running task",
                 Action: func(c *cli.Context) error {
                     res, err := db.Exec("delete from frame where end_time is null")
+                    db.Exec("delete from task where not exists (select 1 from frame where frame.task_id = task.id)")
                     if err != nil {
                         log.Fatal(err)
                     }
