@@ -131,6 +131,7 @@ func getState() (s *state) {
         rows.Scan(&taskId, &startTime)
         s.task = getTaskById(taskId)
         s.startTime, _ = time.Parse(time.RFC3339, startTime)
+        s.timeElapsed = time.Now().Sub(s.startTime)
     }
     return
 }
@@ -478,6 +479,23 @@ func main() {
                         }
                         color.Printf("  <blue>%s</> (%.2f hour%s)\n", r.taskName, hours, s)
                     }
+                    return nil
+                },
+            },
+
+            {
+                Name: "status",
+                Usage: "display status of running task",
+                Action: func(c *cli.Context) error {
+                    state := getState()
+                    color.Printf("Running: <magenta>%s</> ", state.task.project.name)
+                    hours := state.timeElapsed.Hours()
+                    s := ""
+                    if hours != 1 {
+                        s = "s"
+                    }
+                    color.Printf("<blue>%s</> (%.2f hour%s)\n", state.task.name, hours, s)
+                    color.Printf("Started at <green>%s</> (%s ago)\n", state.startTime.Format("15:04"), state.timeElapsed.Round(time.Second))
                     return nil
                 },
             },
