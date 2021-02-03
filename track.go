@@ -157,6 +157,8 @@ func  getTaskById(id int64) (t task) {
 
 func timeFromShorthand(v string) (t time.Time) {
     layouts := []string{
+        "1",
+        "01",
         "2006",
         "01-02",
         "20060102",
