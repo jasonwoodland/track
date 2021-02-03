@@ -392,6 +392,7 @@ func main() {
             {
                 Name: "timeline",
                 Usage: "display a timeline showing time spent on tasks",
+                ArgsUsage: "[project] [task]",
                 Flags: []cli.Flag{
                     &cli.StringFlag{
                         Name: "from",
@@ -446,12 +447,12 @@ func main() {
                     params = append(params, from.Format(time.RFC3339))
                     params = append(params, to.Format(time.RFC3339))
 
-                    if p := c.String("project"); p != "" {
+                    if p := c.Args().Get(0); p != "" {
                         whereConds = append(whereConds, "p.name like ?")
                         params = append(params, "%" + p + "%")
                     }
 
-                    if t := c.String("task"); t != "" {
+                    if t := c.Args().Get(1); t != "" {
                         whereConds = append(whereConds, "t.name like ?")
                         params = append(params, "%" + t + "%")
                     }
@@ -577,6 +578,7 @@ func main() {
             {
                 Name: "log",
                 Usage: "display time spent on tasks",
+                ArgsUsage: "[project] [task]",
                 Flags: []cli.Flag{
                     &cli.StringFlag{
                         Name: "from",
@@ -641,12 +643,12 @@ func main() {
                     whereConds = append(whereConds, "end_date < ?")
                     params = append(params, to.Format(time.RFC3339))
 
-                    if p := c.String("project"); p != "" {
+                    if p := c.Args().Get(0); p != "" {
                         whereConds = append(whereConds, "p.name like ?")
                         params = append(params, "%" + p + "%")
                     }
 
-                    if t := c.String("task"); t != "" {
+                    if t := c.Args().Get(1); t != "" {
                         whereConds = append(whereConds, "t.name like ?")
                         params = append(params, "%" + t + "%")
                     }
