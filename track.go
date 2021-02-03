@@ -797,6 +797,77 @@ func main() {
                     },
                 },
             },
+
+            {
+                Name: "task",
+                Subcommands: []*cli.Command{
+                    {
+                        Name: "rename",
+                        Usage: "rename a task",
+                        ArgsUsage: "project old_name new_name",
+                        Action: func (c *cli.Context) error {
+                            if c.Args().Len() != 3 {
+                                cli.ShowSubcommandHelp(c)
+                                return nil
+                            }
+
+                            projectName := c.Args().Get(0)
+                            oldName := c.Args().Get(1)
+                            newName := c.Args().Get(2)
+
+                            project := getProjectByName(projectName)
+
+                            if project == nil {
+                                color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
+                                return nil
+                            }
+
+                            if project.getTask(newName) != nil {
+                                color.Printf("Task <blue>%s</> already exists for project <magenta>%s</>\n", newName, projectName)
+                                return nil
+                            }
+
+                            if project.getTask(oldName) == nil {
+                                color.Printf("Task <blue>%s</> doesn't exist for project <magenta>%s</>\n", oldName, projectName)
+                                return nil
+                            }
+
+                            db.Exec("update task set name = $1 where name = $2 and project_id = $3", newName, oldName, project.id)
+                            color.Printf("Renamed task <blue>%s</> to <blue>%s</> for project <magenta>%s</>\n", oldName, newName, projectName)
+                            return nil
+                        },
+                    },
+                    {
+                        Name: "remove",
+                        Aliases: []string{"rm"},
+                        Usage: "delete a task",
+                        ArgsUsage: "project task",
+                        Action: func (c *cli.Context) error {
+                            if c.Args().Len() != 2 {
+                                cli.ShowSubcommandHelp(c)
+                                return nil
+                            }
+
+                            projectName := c.Args().Get(0)
+                            taskName := c.Args().Get(1)
+
+                            project := getProjectByName(projectName)
+                            if project == nil {
+                                color.Printf("Project <magenta>%s</> doesn't exists\n", projectName)
+                                return nil
+                            }
+
+                            if project.getTask(taskName) == nil {
+                                color.Printf("Task <blue>%s</> doesn't exists for project <magenta>%s</>\n", taskName, projectName)
+                                return nil
+                            }
+                            db.Exec("delete from project where name = $1 and project_id = $2", taskName, project.id)
+                            color.Printf("Deleted task <blue>%s</> for project <magenta>%s</>\n", taskName, projectName)
+                            return nil
+                        },
+                    },
+                },
+            },
         },
     }
 
