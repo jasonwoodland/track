@@ -403,21 +403,14 @@ func main() {
                         Name: "to",
                         Aliases: []string{"t"},
                     },
-                    &cli.StringFlag{
-                        Name: "project",
-                        Aliases: []string{"p"},
-                    },
-                    &cli.StringFlag{
-                        Name: "task",
-                        Aliases: []string{"T"},
-                    },
                 },
                 Action: func(c *cli.Context) error {
                     from := time.Time{}
-                    to := time.Now()
                     if v := c.String("from"); v != "" {
                         from = timeFromShorthand(v)
                     }
+
+                    to := time.Now()
                     if v := c.String("to"); v != "" {
                         to = timeFromShorthand(v)
                     }
@@ -467,8 +460,7 @@ func main() {
                         log.Fatal(err)
                     }
                     var chart = make(map[string]map[int]bool)
-                    var taskIds []int
-                    var taskNames = make(map[int]string)
+                    var tasks = make(map[int]string)
 
                     for rows.Next() {
                         var date string
@@ -484,35 +476,28 @@ func main() {
                             &taskId,
                             &taskName,
                         )
-                        var i int
-                        var f bool
 
-                        // Set the row index
-                        for ix, tid := range taskIds {
-                            if tid == taskId {
-                                i = ix
-                                f = true
-                                break
-                            }
-                        }
                         if chart[date] == nil {
                             chart[date] = make(map[int]bool)
                         }
-                        if taskId == 0 {
-                            continue
+                        if taskName != "" {
+                            tasks[taskId] = taskName
                         }
-                        if !f {
-                            taskIds = append(taskIds, taskId)
-                            taskNames[taskId] = taskName
-                            i = len(taskIds) - 1
-                        }
-                        chart[date][i] = true
+                        chart[date][taskId] = true
                     }
 
                     longest := 0
-                    for _, t := range taskNames {
+                    for _, t := range tasks {
                         if len(t) > longest {
                             longest = len(t)
+                        }
+                    }
+
+                    projects := getProjects()
+                    longestProject := 0
+                    for _, p := range projects {
+                        if len(p.name) > longestProject {
+                            longestProject = len(p.name)
                         }
                     }
 
@@ -522,7 +507,7 @@ func main() {
                     }
                     sort.Strings(dates)
 
-                    fmt.Printf("%-" + strconv.Itoa(longest) +"v ", "")
+                    fmt.Printf(strings.Repeat(" ", longest + longestProject + 2))
                     for _, date := range dates {
                         d, _ := time.Parse("2006-01-02 00:00:00", date)
                         color.Printf("<gray>%3v</>", d.Day())
@@ -530,14 +515,27 @@ func main() {
                     }
                     fmt.Printf("\n")
 
+                    taskIds := make([]int, 0, len(tasks))
+                    for k := range tasks {
+                        taskIds = append(taskIds, k)
+                    }
+                    sort.Ints(taskIds)
+
+
                     for _, taskId := range taskIds {
-                        color.Printf("<blue>%-" + strconv.Itoa(longest) +"v</> <gray>┃</>", taskNames[taskId], )
+                        color.Printf("<magenta>%-" + strconv.Itoa(longestProject) +"v</> ", getTaskById(int64(taskId)).project.name)
+                        color.Printf("<blue>%-" + strconv.Itoa(longest) +"v</> <gray>┃</>", tasks[taskId])
                         for di, date := range dates {
                             if chart[date][taskId] {
-                                prev := chart[dates[di - 1]][taskId]
-                                next := chart[dates[di + 1]][taskId]
+                                var prev, next bool
+                                if di > 0 {
+                                    prev = chart[dates[di - 1]][taskId]
+                                }
+                                if di < len(dates) - 1 {
+                                    next = chart[dates[di + 1]][taskId]
+                                }
                                 if prev && next {
-                                    color.Printf("<green>━━━</>")
+                                    color.Printf("<green>━●━</>")
                                 } else if prev {
                                     color.Printf("<green>━● </>")
                                 } else if next {
@@ -545,32 +543,12 @@ func main() {
                                 } else {
                                     color.Printf("<green> ● </>")
                                 }
-                                // if prev && next {
-                                //     color.Printf("<green>━━━</>")
-                                // } else if prev {
-                                //     color.Printf("<green>━━╸</>")
-                                // } else if next {
-                                //     color.Printf("<green>╺━━</>")
-                                // } else {
-                                //     color.Printf("<green>╺━╸</>")
-                                // }
                             } else {
                                 fmt.Printf("   ")
                             }
                         }
                         color.Printf("<gray>┃</>\n")
                     }
-                    // for _, date := range dates {
-                    //     row := chart[date]
-                    //     fmt.Printf("%s ", date)
-                    //     for _, taskId := range taskIds {
-                    //         if row[taskId] {
-                    //             fmt.Printf("x")
-                    //         } else {
-                    //             fmt.Printf(" ")
-                    //         }
-                    //     }
-                    // }
                     return nil
                 },
             },
@@ -691,6 +669,9 @@ func main() {
                             if hours != 1 {
                                 s = "s"
                             }
+                            if prevProject != "" {
+                                fmt.Println()
+                            }
                             color.Printf("Project: <magenta>%s</> (%.2f hour%s)\n", r.projectName, hours, s)
                             prevProject = r.projectName
                         }
@@ -701,6 +682,7 @@ func main() {
                         }
                         color.Printf("  <blue>%s</> (%.2f hour%s)\n", r.taskName, hours, s)
                     }
+                    fmt.Println()
                     return nil
                 },
             },
