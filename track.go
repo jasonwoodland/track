@@ -303,11 +303,8 @@ func main() {
                         startTime = startTime.Add(in)
                     }
 
-                    if c.String("in") == "" {
-                        color.Printf("Started tracking time at <green>%s</>\n", startTime.Format("15:04"))
-                    } else {
-                        fmt.Printf("Will start tracking time at %s\n", startTime.Format("15:04"))
-                    }
+                    color.Printf("Running: <magenta>%s</> <blue>%s</>\n", project.name, task.name)
+                    color.Printf("Started at <green>%s</>\n", startTime.Format("15:04"))
 
                     db.Exec(
                         "insert into frame (task_id, start_time) values ($1, $2)",
@@ -373,14 +370,19 @@ func main() {
                     if n, _ := res.RowsAffected(); n == 0 {
                         fmt.Println("No task started")
                     } else {
-                        color.Printf("Stopped tracking time at <green>%s</>\n", endTime.Format("15:04"))
-                        dur := endTime.Sub(state.startTime)
-                        hours := dur.Hours()
+                        color.Printf("Stopped: <magenta>%s</> ", state.task.project.name)
+                        hours := state.timeElapsed.Hours()
                         s := ""
                         if hours != 1 {
                             s = "s"
                         }
-                        fmt.Printf("Duration: %.2f hour%s (%s)\n", hours, s, dur.Round(time.Second))
+                        color.Printf("<blue>%s</> (%.2f hour%s)\n", state.task.name, hours, s)
+                        color.Printf("Finished at <green>%s</>\n", endTime.Format("15:04"))
+                        s = ""
+                        if hours != 1 {
+                            s = "s"
+                        }
+                        fmt.Printf("Duration: %.2f hour%s (%s)\n", hours, s, state.timeElapsed.Round(time.Second))
                     }
 
                     return nil
