@@ -743,7 +743,7 @@ func main() {
                     },
                     {
                         Name: "rename",
-                        Usage: "rename a new project",
+                        Usage: "rename a project",
                         ArgsUsage: "old_name new_name",
                         Action: func (c *cli.Context) error {
                             oldName := c.Args().Get(0)
