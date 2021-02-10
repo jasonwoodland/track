@@ -635,6 +635,17 @@ func main() {
                     if len(whereConds) != 0 {
                         query += "having\n" + strings.Join(whereConds, "\nand\n")
                     }
+                    
+                    query += `
+                        order by
+                            (
+                                select max(start_time)
+                                from frame f3
+                                left join task t3 on t3.id = task_id
+                                where
+                                    t3.project_id = p.id
+                            )
+                    `
 
                     rows, err := db.Query(query, params...)
                     if err != nil {
