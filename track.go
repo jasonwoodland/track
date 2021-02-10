@@ -703,7 +703,7 @@ func main() {
                 Action: func(c *cli.Context) error {
                     state := getState()
                     if !state.running {
-                        fmt.Println("No running task")
+                        fmt.Println("Not running")
                         return nil
                     }
                     color.Printf("Running: <magenta>%s</> ", state.task.project.name)
