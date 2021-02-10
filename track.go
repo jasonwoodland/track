@@ -596,17 +596,13 @@ func main() {
                                 select
                                     sum(strftime("%s", end_time) - strftime("%s", start_time)) as total
                                 from frame f2
-                                left join task t on t.id = task_id
-                                left join project p on p.id = t.project_id
+                                left join task t2 on t2.id = task_id
                                 where
-                                    f2.task_id = task_id
-                                group by t.project_id
+                                    t2.project_id = p.id
                             ) as project_total
                         from frame f
                         left join task t on t.id = task_id
                         left join project p on p.id = t.project_id
-                    `
-                    query += `
                         group by
                             task_id
                     `
