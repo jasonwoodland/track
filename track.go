@@ -989,17 +989,17 @@ func main() {
                             }
 
                             if project.getTask(newName) != nil {
-                                color.Printf("Task <blue>%s</> already exists for project <magenta>%s</>\n", newName, projectName)
+                                color.Printf("Task <blue>%s</> already exists on project <magenta>%s</>\n", newName, projectName)
                                 return nil
                             }
 
                             if project.getTask(oldName) == nil {
-                                color.Printf("Task <blue>%s</> doesn't exist for project <magenta>%s</>\n", oldName, projectName)
+                                color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", oldName, projectName)
                                 return nil
                             }
 
                             db.Exec("update task set name = $1 where name = $2 and project_id = $3", newName, oldName, project.id)
-                            color.Printf("Renamed task <blue>%s</> to <blue>%s</> for project <magenta>%s</>\n", oldName, newName, projectName)
+                            color.Printf("Renamed task <blue>%s</> to <blue>%s</> on project <magenta>%s</>\n", oldName, newName, projectName)
                             return nil
                         },
                     },
@@ -1024,11 +1024,11 @@ func main() {
                             }
 
                             if project.getTask(taskName) == nil {
-                                color.Printf("Task <blue>%s</> doesn't exists for project <magenta>%s</>\n", taskName, projectName)
+                                color.Printf("Task <blue>%s</> doesn't exists on project <magenta>%s</>\n", taskName, projectName)
                                 return nil
                             }
                             db.Exec("delete from project where name = $1 and project_id = $2", taskName, project.id)
-                            color.Printf("Deleted task <blue>%s</> for project <magenta>%s</>\n", taskName, projectName)
+                            color.Printf("Deleted task <blue>%s</> on project <magenta>%s</>\n", taskName, projectName)
                             return nil
                         },
                     },
