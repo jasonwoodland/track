@@ -105,6 +105,25 @@ func (p *project) addTask(name string) *task {
     }
 }
 
+func (t *task) getFrames() (frames []*frame) {
+    rows, err := db.Query("select id, start_time, end_time from frame where task_id = $1", t.id)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer rows.Close()
+    for rows.Next() {
+        f := &frame{
+            task: t,
+        }
+        var startTime, endTime string
+        rows.Scan(&f.id, &startTime, &endTime)
+        f.startTime, _ = time.Parse(time.RFC3339, startTime)
+        f.endTime, _ = time.Parse(time.RFC3339, endTime)
+        frames = append(frames, f)
+    }
+    return
+}
+
 func getProjects() (projects []*project) {
     rows, err := db.Query("select id, name from project")
     if err != nil {
@@ -138,7 +157,7 @@ func getState() (s *state) {
     return
 }
 
-func  getTaskById(id int64) (t task) {
+func getTaskById(id int64) (t task) {
     rows, err := db.Query("select id, name, project_id from task where id = $1", id)
     if err != nil {
         log.Fatal(err)
@@ -569,16 +588,14 @@ func main() {
                         Name: "to",
                         Aliases: []string{"t"},
                     },
-                    &cli.StringFlag{
-                        Name: "project",
-                        Aliases: []string{"p"},
-                    },
-                    &cli.StringFlag{
-                        Name: "task",
-                        Aliases: []string{"T"},
+                    &cli.BoolFlag{
+                        Name: "frames",
+                        Aliases: []string{"x"},
                     },
                 },
                 Action: func(c *cli.Context) error {
+                    showFrames := c.Bool("frames")
+
                     from := time.Time{}
                     to := time.Now()
                     if v := c.String("from"); v != "" {
@@ -634,7 +651,7 @@ func main() {
                     if len(whereConds) != 0 {
                         query += "having\n" + strings.Join(whereConds, "\nand\n")
                     }
-                    
+
                     query += `
                         order by
                             (
@@ -691,6 +708,25 @@ func main() {
                             s = "s"
                         }
                         color.Printf("  <blue>%s</> (%.2f hour%s)\n", r.taskName, hours, s)
+
+                        if showFrames {
+                            frames := getProjectByName(r.projectName).getTask(r.taskName).getFrames()
+                            for i, frame := range frames {
+                                hours := frame.endTime.Sub(frame.startTime).Hours()
+                                s := ""
+                                if hours != 1 {
+                                    s = "s"
+                                }
+                                color.Printf(
+                                    "    <gray>[%v]</> <green>%s - %s</> <default>(%.2f hour%s)</>\n",
+                                    i,
+                                    frame.startTime.Format("Mon Jan 02 15:04"),
+                                    frame.endTime.Format("15:04"),
+                                    hours,
+                                    s,
+                                )
+                            }
+                        }
                     }
                     fmt.Println()
                     return nil
