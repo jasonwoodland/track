@@ -207,10 +207,13 @@ func timeFromShorthand(v string) (t time.Time) {
 func initDb(db *sql.DB) {
     db.Exec(`
         create table if not exists project (
-              id integer primary key,
-              name text
-            );
-          `)
+            id integer primary key,
+            name text
+        );
+  `)
+
+  db.Exec("pragma foreign_keys = on")
+
     db.Exec(`
         create table if not exists task (
             id integer primary key,
