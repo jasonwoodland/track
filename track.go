@@ -831,6 +831,140 @@ func main() {
             },
 
             {
+                Name: "frame",
+                Subcommands: []*cli.Command{
+                    {
+                        Name: "edit",
+                        Usage: "edit a frame",
+                        ArgsUsage: "project task frame",
+                        Flags: []cli.Flag{
+                            &cli.StringFlag{
+                                Name: "from",
+                                Aliases: []string{"f"},
+                            },
+                            &cli.StringFlag{
+                                Name: "to",
+                                Aliases: []string{"t"},
+                            },
+                        },
+                        Action: func (c *cli.Context) error {
+                            if c.Args().Len() != 3 {
+                                cli.ShowSubcommandHelp(c)
+                                return nil
+                            }
+
+                            projectName := c.Args().Get(0)
+                            taskName := c.Args().Get(1)
+                            frameIndex, _ := strconv.Atoi(c.Args().Get(2))
+
+                            project := getProjectByName(projectName)
+
+                            if project == nil {
+                                color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
+                                return nil
+                            }
+
+                            task := project.getTask(taskName)
+
+                            if task == nil {
+                                color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
+                                return nil
+                            }
+
+                            frames := task.getFrames()
+
+                            if frameIndex > len(frames) {
+                                color.Printf("Frame <gray>[%v]</> doesn't exist on task <blue>%s</>, on project <magenta>%s</>\n", frameIndex, taskName, projectName)
+                                return nil
+                            }
+
+                            frame := frames[frameIndex]
+
+                            if d, err := time.ParseDuration(c.String("from")); err == nil {
+                                frame.startTime = frame.startTime.Add(d)
+                            }
+
+                            if d, err := time.ParseDuration(c.String("to")); err == nil {
+                                frame.endTime = frame.endTime.Add(d)
+                            }
+
+                            hours := frame.endTime.Sub(frame.startTime).Hours()
+                            s := ""
+                            if hours != 1 {
+                                s = "s"
+                            }
+
+                            color.Printf("Project: <magenta>%s</>\n", projectName)
+                            color.Printf("  <blue>%s</>\n", taskName)
+                            color.Printf(
+                                "    <gray>[%v]</> <green>%s - %s</> <default>(%.2f hour%s)</>\n",
+                                frameIndex,
+                                frame.startTime.Format("Mon Jan 02 15:04"),
+                                frame.endTime.Format("15:04"),
+                                hours,
+                                s,
+                            )
+
+                            db.Exec(
+                                "update frame set start_time = $1, end_time = $2 where id = $3",
+                                frame.startTime.Format(time.RFC3339),
+                                frame.endTime.Format(time.RFC3339),
+                                frame.id,
+                            )
+                            return nil
+                        },
+                    },
+                    {
+                        Name: "remove",
+                        Aliases: []string{"rm"},
+                        Usage: "delete a frame",
+                        ArgsUsage: "project task frame",
+                        Action: func (c *cli.Context) error {
+                            if c.Args().Len() != 3 {
+                                cli.ShowSubcommandHelp(c)
+                                return nil
+                            }
+
+                            projectName := c.Args().Get(0)
+                            taskName := c.Args().Get(1)
+                            frameIndex, _ := strconv.Atoi(c.Args().Get(2))
+
+                            project := getProjectByName(projectName)
+
+                            if project == nil {
+                                color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
+                                return nil
+                            }
+
+                            task := project.getTask(taskName)
+
+                            if task == nil {
+                                color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
+                                return nil
+                            }
+
+                            frames := task.getFrames()
+
+                            if frameIndex > len(frames) - 1 {
+                                color.Printf("Frame <gray>[%v]</> doesn't exist on <magenta>%s</> <blue>%s</>\n", frameIndex, taskName, projectName)
+                                return nil
+                            }
+
+                            frame := frames[frameIndex]
+
+                            color.Printf("Removed frame <gray>[%v]</> on task <blue>%s</>, on project <magenta>%s</>\n", frameIndex, taskName, projectName)
+
+                            db.Exec(
+                                "delete from frame where id = $1",
+                                frame.id,
+                            )
+                            return nil
+                        },
+                    },
+                },
+            },
+
+            {
                 Name: "task",
                 Subcommands: []*cli.Command{
                     {
