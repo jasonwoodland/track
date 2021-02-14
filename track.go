@@ -562,7 +562,6 @@ func main() {
                         left join project p on p.id = t.project_id
                     `
 
-
                     var params []interface{}
                     var whereConds []string
 
@@ -590,10 +589,11 @@ func main() {
                     }
                     var chart = make(map[string]map[int]bool)
                     var tasks = make(map[int]string)
+                    var projects = make(map[int]string)
 
                     for rows.Next() {
                         var date string
-                        var projectId int64
+                        var projectId int
                         var projectName string
                         var taskId int
                         var taskName string
@@ -609,6 +609,9 @@ func main() {
                         if chart[date] == nil {
                             chart[date] = make(map[int]bool)
                         }
+                        if projectName != "" {
+                            projects[projectId] = projectName
+                        }
                         if taskName != "" {
                             tasks[taskId] = taskName
                         }
@@ -622,11 +625,10 @@ func main() {
                         }
                     }
 
-                    projects := getProjects()
                     longestProject := 0
                     for _, p := range projects {
-                        if len(p.name) > longestProject {
-                            longestProject = len(p.name)
+                        if len(p) > longestProject {
+                            longestProject = len(p)
                         }
                     }
 
