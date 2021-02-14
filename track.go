@@ -570,18 +570,18 @@ func main() {
                     params = append(params, to.Format(time.RFC3339))
 
                     if p := c.Args().Get(0); p != "" {
-                        whereConds = append(whereConds, "p.name like ?")
+                        whereConds = append(whereConds, "(p.name like ? or p.name is null)")
                         params = append(params, "%" + p + "%")
                     }
 
                     if t := c.Args().Get(1); t != "" {
-                        whereConds = append(whereConds, "t.name like ?")
+                        whereConds = append(whereConds, "(t.name like ? or t.name is null)")
                         params = append(params, "%" + t + "%")
                     }
 
                     // Add where conditions to query
                     if len(whereConds) != 0 {
-                        query += "having\n" + strings.Join(whereConds, "\nand\n")
+                        query += "where\n" + strings.Join(whereConds, "\nand\n")
                     }
 
                     rows, err := db.Query(query, params...)
