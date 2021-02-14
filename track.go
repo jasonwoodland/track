@@ -140,6 +140,24 @@ func (t *task) getFrames() (frames []*frame) {
     return
 }
 
+func (t *task) getTotal() (d time.Duration) {
+    rows, err := db.Query(`
+        select
+            sum(strftime("%s", end_time) - strftime("%s", start_time)) as total
+        from frame
+        where task_id = $1
+    `, t.id)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer rows.Close()
+    if rows.Next() {
+        rows.Scan(&d)
+        d *= time.Second
+    }
+    return
+}
+
 func getProjects() (projects []*project) {
     rows, err := db.Query("select id, name from project")
     if err != nil {
@@ -414,7 +432,7 @@ func main() {
                         startTime = startTime.Add(in)
                     }
 
-                    color.Printf("Running: <magenta>%s</> <blue>%s</>\n", project.name, task.name)
+                    color.Printf("Running: <magenta>%s</> <blue>%s</> (%s)\n", project.name, task.name, getHours(task.getTotal()))
                     color.Printf("Started at <green>%s</>\n", startTime.Format("15:04"))
 
                     db.Exec(
@@ -481,19 +499,18 @@ func main() {
                     if n, _ := res.RowsAffected(); n == 0 {
                         fmt.Println("No task started")
                     } else {
-                        color.Printf("Stopped: <magenta>%s</> ", state.task.project.name)
-                        hours := state.timeElapsed.Hours()
-                        s := ""
-                        if hours != 1 {
-                            s = "s"
-                        }
-                        color.Printf("<blue>%s</> (%.2f hour%s)\n", state.task.name, hours, s)
-                        color.Printf("Finished at <green>%s</>\n", endTime.Format("15:04"))
-                        s = ""
-                        if hours != 1 {
-                            s = "s"
-                        }
-                        fmt.Printf("Duration: %.2f hour%s (%s)\n", hours, s, state.timeElapsed.Round(time.Second))
+                        color.Printf(
+                            "Stopped: <magenta>%s</> <blue>%s</> (%s, %s total)\n",
+                            state.task.project.name,
+                            state.task.name,
+                            getHours(state.timeElapsed),
+                            getHours(state.task.getTotal()),
+                        )
+                        color.Printf(
+                            "Finished at <green>%s</> (%s)\n",
+                            endTime.Format("15:04"),
+                            state.timeElapsed.Round(time.Second),
+                        )
                     }
 
                     return nil
