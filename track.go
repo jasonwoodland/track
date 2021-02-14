@@ -89,6 +89,22 @@ func (p *project) getTask(name string) (t *task) {
     return
 }
 
+func (p *project) getTasks() (tasks []*task) {
+    rows, err := db.Query("select id, name from task where project_id = $1", p.id)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer rows.Close()
+    for rows.Next() {
+        t := &task{
+            project: p,
+        }
+        rows.Scan(&t.id, &t.name)
+        tasks = append(tasks, t)
+    }
+    return
+}
+
 func (p *project) addTask(name string) *task {
     res, err := db.Exec("insert into task (name, project_id) values ($1, $2)", name, p.id)
     if err != nil {
@@ -265,15 +281,87 @@ func (t *Time) Scan(v interface{}) error {
     return nil
 }
 
+func projectCompletion(c *cli.Context) {
+    if c.NArg() == 0 {
+        for _, p := range getProjects() {
+            fmt.Println(p.name)
+        }
+        return
+    }
+}
+
+func projectTaskCompletion(c *cli.Context) {
+    if c.NArg() == 0 {
+        for _, p := range getProjects() {
+            fmt.Println(p.name)
+        }
+        return
+    }
+
+    p := getProjectByName(c.Args().Get(0))
+
+    if c.NArg() == 1 {
+        for _, t := range p.getTasks() {
+            fmt.Println(t.name)
+        }
+    }
+}
+
+func projectTaskFrameCompletion(c *cli.Context) {
+    if c.NArg() == 0 {
+        for _, p := range getProjects() {
+            fmt.Println(p.name)
+        }
+        return
+    }
+
+    p := getProjectByName(c.Args().Get(0))
+
+    if c.NArg() == 1 {
+        for _, t := range p.getTasks() {
+            fmt.Println(t.name)
+        }
+        return
+    }
+
+    t := p.getTask(c.Args().Get(1))
+
+    if c.NArg() == 2 {
+        frames := t.getFrames()
+        for i, f := range frames {
+            fmt.Printf(
+                "%v:%s - %s\n",
+                i,
+                f.startTime.Format("Mon Jan 02 15:04"),
+                f.endTime.Format("15:04"),
+            )
+        }
+    }
+}
+
+func getHours(d time.Duration) string {
+    hours := d.Hours()
+    s := ""
+    if hours != 1 {
+        s = "s"
+    }
+    return fmt.Sprintf("%.2f hour%s", hours, s)
+}
+
 func main() {
     dbFilePath, _ := xdg.DataFile("track-cli/db.sqlite3")
     db, _ = sql.Open("sqlite3", dbFilePath)
     initDb(db)
     defer db.Close()
 
+    for i, a := range os.Args {
+        os.Args[i] = strings.ReplaceAll(a, "\\#", "#")
+    }
+
     app := &cli.App{
         Name: "track",
         Usage: "track your time",
+        EnableBashCompletion: true,
 
         Commands: cli.Commands{
             {
@@ -289,6 +377,7 @@ func main() {
                         Name: "in",
                     },
                 },
+                BashComplete: projectTaskCompletion,
                 Action: func(c *cli.Context) error {
                     startTime := time.Now()
 
@@ -415,6 +504,7 @@ func main() {
                 Name: "timeline",
                 Usage: "display a timeline showing time spent on tasks",
                 ArgsUsage: "[project] [task]",
+                BashComplete: projectTaskCompletion,
                 Flags: []cli.Flag{
                     &cli.StringFlag{
                         Name: "from",
@@ -579,6 +669,7 @@ func main() {
                 Name: "log",
                 Usage: "display time spent on tasks",
                 ArgsUsage: "[project] [task]",
+                BashComplete: projectTaskCompletion,
                 Flags: []cli.Flag{
                     &cli.StringFlag{
                         Name: "from",
@@ -791,6 +882,7 @@ func main() {
                         Name: "rename",
                         Usage: "rename a project",
                         ArgsUsage: "old_name new_name",
+                        BashComplete: projectCompletion,
                         Action: func (c *cli.Context) error {
                             oldName := c.Args().Get(0)
                             newName := c.Args().Get(1)
@@ -812,6 +904,7 @@ func main() {
                         Aliases: []string{"rm"},
                         Usage: "delete a project",
                         ArgsUsage: "name",
+                        BashComplete: projectCompletion,
                         Action: func (c *cli.Context) error {
                             name := c.Args().Get(0)
                             if name == "" {
@@ -837,6 +930,7 @@ func main() {
                         Name: "edit",
                         Usage: "edit a frame",
                         ArgsUsage: "project task frame",
+                        BashComplete: projectTaskFrameCompletion,
                         Flags: []cli.Flag{
                             &cli.StringFlag{
                                 Name: "from",
@@ -919,6 +1013,7 @@ func main() {
                         Aliases: []string{"rm"},
                         Usage: "delete a frame",
                         ArgsUsage: "project task frame",
+                        BashComplete: projectTaskFrameCompletion,
                         Action: func (c *cli.Context) error {
                             if c.Args().Len() != 3 {
                                 cli.ShowSubcommandHelp(c)
@@ -971,6 +1066,7 @@ func main() {
                         Name: "rename",
                         Usage: "rename a task",
                         ArgsUsage: "project old_name new_name",
+                        BashComplete: projectTaskCompletion,
                         Action: func (c *cli.Context) error {
                             if c.Args().Len() != 3 {
                                 cli.ShowSubcommandHelp(c)
@@ -1008,6 +1104,7 @@ func main() {
                         Aliases: []string{"rm"},
                         Usage: "delete a task",
                         ArgsUsage: "project task",
+                        BashComplete: projectTaskCompletion,
                         Action: func (c *cli.Context) error {
                             if c.Args().Len() != 2 {
                                 cli.ShowSubcommandHelp(c)
