@@ -434,6 +434,7 @@ func main() {
     go func() {
         <-c
         fmt.Println()
+        fmt.Printf("\033[?1049l")
         os.Exit(0)
     }()
 
@@ -907,42 +908,43 @@ func main() {
             {
                 Name: "status",
                 Usage: "Display status of running task",
+                BashComplete: func(c *cli.Context) {
+                    showFlagCompletion(c)
+                },
                 Flags: []cli.Flag{
                     &cli.BoolFlag{
                         Name: "watch",
-                        Usage: "Output the current status to the screen periodically",
                         Aliases: []string{"w"},
+                        Usage: "Output the current status to the screen periodically",
                     },
                 },
                 Action: func(c *cli.Context) error {
-                    printStatus := func() int {
+                    printStatus := func() {
                         state := getState()
                         if !state.running {
-                            fmt.Printf("Not running")
-                            return 1
+                            fmt.Println("Not running\033[J")
+                            return
                         }
                         color.Printf(
-                            "Running: <magenta>%s</> <blue>%s</> (%s, %s total)\n",
+                            "Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
                             state.task.project.name,
                             state.task.name,
                             getHours(state.timeElapsed),
                             getHours(state.task.getTotal() + state.timeElapsed),
                         )
-                        color.Printf("Started at <green>%s</> (%s ago)", state.startTime.Format("15:04"), state.timeElapsed.Round(time.Second))
-                        return 2
+                        color.Printf("Started at <green>%s</> (%s ago)\033[K\n", state.startTime.Format("15:04"), state.timeElapsed.Round(time.Second))
                     }
 
                     if c.Bool("watch") {
+                        fmt.Printf("\033[?1049h\033[H")
                         for {
-                            lines := printStatus()
-                            fmt.Printf("\033[0K\n\033[0K")
+                            printStatus()
                             time.Sleep(time.Second)
-                            fmt.Printf("\033[%vA", lines)
+                            fmt.Printf("\033[H")
                         }
                     }
 
                     printStatus()
-                    fmt.Printf("\n")
 
                     return nil
                 },
@@ -1050,8 +1052,8 @@ func main() {
                             },
                             &cli.StringFlag{
                                 Name: "end",
-                                Usage: "Duration to modify the end time by (eg. --end -5m)",
                                 Aliases: []string{"e"},
+                                Usage: "Duration to modify the end time by (eg. --end -5m)",
                             },
                         },
                         Action: func (c *cli.Context) error {
