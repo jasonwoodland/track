@@ -398,6 +398,27 @@ func getHours(d time.Duration) string {
     return fmt.Sprintf("%.2f hour%s", hours, s)
 }
 
+func confirm(s string, defaultYes bool) bool {
+    r := bufio.NewReader(os.Stdin)
+
+    if defaultYes {
+        fmt.Printf("%s [Y/n]: ", s)
+    } else {
+        fmt.Printf("%s [y/N]: ", s)
+    }
+        
+    res, err := r.ReadString('\n')
+    if err != nil {
+        log.Fatal(err)
+    }
+        
+    if defaultYes {
+        return strings.ToLower(strings.TrimSpace(res)) != "n"
+    } else {
+        return strings.ToLower(strings.TrimSpace(res)) == "y"
+    }
+}
+
 func main() {
     dbFilePath, _ := xdg.DataFile("track-cli/db.sqlite3")
     db, _ = sql.Open("sqlite3", dbFilePath)
@@ -971,10 +992,16 @@ func main() {
                                 cli.ShowSubcommandHelp(c)
                                 return nil
                             }
+
                             if getProjectByName(name) == nil {
                                 color.Printf("Project <magenta>%s</> doesn't exists\n", name)
                                 return nil
                             }
+
+                            if !confirm(color.Sprintf("Delete project <magenta>%s</>?", name), false) {
+                                return nil
+                            }
+
                             db.Exec("delete from project where name = $1", name)
                             color.Printf("Deleted project <magenta>%s</>\n", name)
                             return nil
@@ -1102,14 +1129,16 @@ func main() {
                                 return nil
                             }
 
+                            if !confirm(color.Sprintf("Remove frame <gray>[%v]</> on task <blue>%s</>, on project <magenta>%s</>?", frameIndex, taskName, projectName), false) {
+                                return nil
+                            }
+
                             frame := frames[frameIndex]
-
-                            color.Printf("Removed frame <gray>[%v]</> on task <blue>%s</>, on project <magenta>%s</>\n", frameIndex, taskName, projectName)
-
                             db.Exec(
                                 "delete from frame where id = $1",
                                 frame.id,
                             )
+                            color.Printf("Removed frame <gray>[%v]</> on task <blue>%s</>, on project <magenta>%s</>\n", frameIndex, taskName, projectName)
                             return nil
                         },
                     },
@@ -1182,6 +1211,11 @@ func main() {
                                 color.Printf("Task <blue>%s</> doesn't exists on project <magenta>%s</>\n", taskName, projectName)
                                 return nil
                             }
+
+                            if !confirm(color.Sprintf("Delete task <blue>%s</> on project <magenta>%s</>?", taskName, projectName), false) {
+                                return nil
+                            }
+
                             db.Exec("delete from project where name = $1 and project_id = $2", taskName, project.id)
                             color.Printf("Deleted task <blue>%s</> on project <magenta>%s</>\n", taskName, projectName)
                             return nil
