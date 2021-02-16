@@ -765,6 +765,8 @@ func main() {
                                 left join task t2 on t2.id = task_id
                                 where
                                     t2.project_id = p.id
+                                and
+                                    end_time not like '0001-%'
                             ) as project_total
                         from frame f
                         left join task t on t.id = task_id
