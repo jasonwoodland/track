@@ -942,6 +942,7 @@ func main() {
                     }
 
                     printStatus()
+                    fmt.Printf("\n")
 
                     return nil
                 },
