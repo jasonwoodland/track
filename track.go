@@ -299,7 +299,29 @@ func (t *Time) Scan(v interface{}) error {
     return nil
 }
 
+func showFlagCompletion(c *cli.Context) bool {
+    if c.Args().Len() > 0 && c.Args().Get(c.Args().Len() - 1)[0] == '-' {
+        for _, f := range c.Command.Flags {
+            desc := f.String()[strings.Index(f.String(), "\t") + 1:]
+            for _, n := range f.Names() {
+                if len(n) == 1 {
+                    fmt.Printf("-%s", n)
+                } else {
+                    fmt.Printf("--%s", n)
+                }
+                fmt.Printf(":%s\n", desc)
+            }
+        }
+        return true
+    }
+    return false
+}
+
 func projectCompletion(c *cli.Context) {
+    if showFlagCompletion(c) {
+        return
+    }
+
     if c.NArg() == 0 {
         for _, p := range getProjects() {
             fmt.Println(p.name)
@@ -309,6 +331,10 @@ func projectCompletion(c *cli.Context) {
 }
 
 func projectTaskCompletion(c *cli.Context) {
+    if showFlagCompletion(c) {
+        return
+    }
+
     if c.NArg() == 0 {
         for _, p := range getProjects() {
             fmt.Println(p.name)
@@ -326,6 +352,10 @@ func projectTaskCompletion(c *cli.Context) {
 }
 
 func projectTaskFrameCompletion(c *cli.Context) {
+    if showFlagCompletion(c) {
+        return
+    }
+
     if c.NArg() == 0 {
         for _, p := range getProjects() {
             fmt.Println(p.name)
