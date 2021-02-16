@@ -850,28 +850,20 @@ func main() {
                             color.Printf("Project: <magenta>%s</> (%.2f hour%s)\n", r.projectName, hours, s)
                             prevProject = r.projectName
                         }
-                        hours := r.totalDuration.Hours()
-                        s := ""
-                        if hours != 1 {
-                            s = "s"
-                        }
-                        color.Printf("  <blue>%s</> (%.2f hour%s)\n", r.taskName, hours, s)
+                        color.Printf("  <blue>%s</> (%s)\n", r.taskName, getHours(r.totalDuration))
 
                         if showFrames {
                             frames := getProjectByName(r.projectName).getTask(r.taskName).getFrames()
                             for i, frame := range frames {
-                                hours := frame.endTime.Sub(frame.startTime).Hours()
-                                s := ""
-                                if hours != 1 {
-                                    s = "s"
+                                if frame.endTime.Equal(time.Time{}) {
+                                    frame.endTime = time.Now()
                                 }
                                 color.Printf(
-                                    "    <gray>[%v]</> <green>%s - %s</> <default>(%.2f hour%s)</>\n",
+                                    "    <gray>[%v]</> <green>%s - %s</> <default>(%s)</>\n",
                                     i,
                                     frame.startTime.Format("Mon Jan 02 15:04"),
                                     frame.endTime.Format("15:04"),
-                                    hours,
-                                    s,
+                                    getHours(frame.endTime.Sub(frame.startTime)),
                                 )
                             }
                         }
@@ -1043,21 +1035,15 @@ func main() {
                                 frame.endTime = frame.endTime.Add(d)
                             }
 
-                            hours := frame.endTime.Sub(frame.startTime).Hours()
-                            s := ""
-                            if hours != 1 {
-                                s = "s"
-                            }
-
+                            // TODO 00:00 shown if the frame is currently running.
                             color.Printf("Project: <magenta>%s</>\n", projectName)
                             color.Printf("  <blue>%s</>\n", taskName)
                             color.Printf(
-                                "    <gray>[%v]</> <green>%s - %s</> <default>(%.2f hour%s)</>\n",
+                                "    <gray>[%v]</> <green>%s - %s</> (%s)\n",
                                 frameIndex,
                                 frame.startTime.Format("Mon Jan 02 15:04"),
                                 frame.endTime.Format("15:04"),
-                                hours,
-                                s,
+                                getHours(frame.endTime.Sub(frame.startTime)),
                             )
 
                             db.Exec(
