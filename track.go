@@ -1043,14 +1043,14 @@ func main() {
                         BashComplete: projectTaskFrameCompletion,
                         Flags: []cli.Flag{
                             &cli.StringFlag{
-                                Name: "from",
-                                Aliases: []string{"f"},
-                                Usage: "Start date for the timeline",
+                                Name: "start",
+                                Aliases: []string{"s"},
+                                Usage: "Duration to modify the start time by (eg. --start -5m)",
                             },
                             &cli.StringFlag{
-                                Name: "to",
-                                Usage: "End date for the timeline",
-                                Aliases: []string{"t"},
+                                Name: "end",
+                                Usage: "Duration to modify the end time by (eg. --end -5m)",
+                                Aliases: []string{"e"},
                             },
                         },
                         Action: func (c *cli.Context) error {
@@ -1086,11 +1086,11 @@ func main() {
 
                             frame := frames[frameIndex]
 
-                            if d, err := time.ParseDuration(c.String("from")); err == nil {
+                            if d, err := time.ParseDuration(c.String("start")); err == nil {
                                 frame.startTime = frame.startTime.Add(d)
                             }
 
-                            if d, err := time.ParseDuration(c.String("to")); err == nil {
+                            if d, err := time.ParseDuration(c.String("end")); err == nil {
                                 frame.endTime = frame.endTime.Add(d)
                             }
 
