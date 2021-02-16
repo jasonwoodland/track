@@ -1107,7 +1107,7 @@ func main() {
             },
 
             {
-                Name: "Task",
+                Name: "task",
                 Usage: "Manage tasks on a project",
                 Subcommands: []*cli.Command{
                     {
