@@ -907,20 +907,42 @@ func main() {
             {
                 Name: "status",
                 Usage: "Display status of running task",
+                Flags: []cli.Flag{
+                    &cli.BoolFlag{
+                        Name: "watch",
+                        Usage: "Output the current status to the screen periodically",
+                        Aliases: []string{"w"},
+                    },
+                },
                 Action: func(c *cli.Context) error {
-                    state := getState()
-                    if !state.running {
-                        fmt.Println("Not running")
-                        return nil
+                    printStatus := func() int {
+                        state := getState()
+                        if !state.running {
+                            fmt.Printf("Not running")
+                            return 1
+                        }
+                        color.Printf(
+                            "Running: <magenta>%s</> <blue>%s</> (%s, %s total)\n",
+                            state.task.project.name,
+                            state.task.name,
+                            getHours(state.timeElapsed),
+                            getHours(state.task.getTotal() + state.timeElapsed),
+                        )
+                        color.Printf("Started at <green>%s</> (%s ago)", state.startTime.Format("15:04"), state.timeElapsed.Round(time.Second))
+                        return 2
                     }
-                    color.Printf(
-                        "Running: <magenta>%s</> <blue>%s</> (%s, %s total)\n",
-                        state.task.project.name,
-                        state.task.name,
-                        getHours(state.timeElapsed),
-                        getHours(state.task.getTotal() + state.timeElapsed),
-                    )
-                    color.Printf("Started at <green>%s</> (%s ago)\n", state.startTime.Format("15:04"), state.timeElapsed.Round(time.Second))
+
+                    if c.Bool("watch") {
+                        for {
+                            lines := printStatus()
+                            fmt.Printf("\033[0K\n\033[0K")
+                            time.Sleep(time.Second)
+                            fmt.Printf("\033[%vA", lines)
+                        }
+                    }
+
+                    printStatus()
+
                     return nil
                 },
             },
