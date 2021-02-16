@@ -408,21 +408,22 @@ func main() {
 
     app := &cli.App{
         Name: "track",
-        Usage: "track your time",
+        Usage: "Track time for projects and tasks",
         EnableBashCompletion: true,
 
         Commands: cli.Commands{
             {
                 Name: "start",
-                Aliases: []string{"s"},
-                Usage: "start tracking time for a task",
+                Usage: "Start tracking time for a task",
                 ArgsUsage: "project task",
                 Flags: []cli.Flag{
                     &cli.StringFlag{
                         Name: "ago",
+                        Usage: "Offest the start time with a duration (eg. --ago 5m)",
                     },
                     &cli.StringFlag{
                         Name: "in",
+                        Usage: "Start tracking in a given duration (eg. --in 5m)",
                     },
                 },
                 BashComplete: projectTaskCompletion,
@@ -476,8 +477,7 @@ func main() {
 
             {
                 Name: "cancel",
-                Aliases: []string{"c"},
-                Usage: "cancel a running task",
+                Usage: "Cancel a running task",
                 Action: func(c *cli.Context) error {
                     res, err := db.Exec("delete from frame where end_time is null")
                     db.Exec("delete from task where not exists (select 1 from frame where frame.task_id = task.id)")
@@ -496,14 +496,15 @@ func main() {
 
             {
                 Name: "stop",
-                Aliases: []string{"st"},
-                Usage: "stop a running task",
+                Usage: "Stop a running task",
                 Flags: []cli.Flag{
                     &cli.StringFlag{
                         Name: "ago",
+                        Usage: "Offest the start time with a duration (eg. --ago 5m)",
                     },
                     &cli.StringFlag{
                         Name: "in",
+                        Usage: "Start tracking in a given duration (eg. --in 5m)",
                     },
                 },
                 Action: func(c *cli.Context) error {
@@ -549,17 +550,19 @@ func main() {
 
             {
                 Name: "timeline",
-                Usage: "display a timeline showing time spent on tasks",
+                Usage: "Display a timeline showing time spent on tasks for a given date range",
                 ArgsUsage: "[project] [task]",
                 BashComplete: projectTaskCompletion,
                 Flags: []cli.Flag{
                     &cli.StringFlag{
                         Name: "from",
                         Aliases: []string{"f"},
+                        Usage: "Start date for the timeline",
                         Required: true,
                     },
                     &cli.StringFlag{
                         Name: "to",
+                        Usage: "End date for the timeline",
                         Aliases: []string{"t"},
                     },
                 },
@@ -716,21 +719,24 @@ func main() {
 
             {
                 Name: "log",
-                Usage: "display time spent on tasks",
+                Usage: "Display time spent on projects and tasks",
                 ArgsUsage: "[project] [task]",
                 BashComplete: projectTaskCompletion,
                 Flags: []cli.Flag{
                     &cli.StringFlag{
                         Name: "from",
                         Aliases: []string{"f"},
+                        Usage: "Start date from which to include tasks (TODO)",
                     },
                     &cli.StringFlag{
                         Name: "to",
+                        Usage: "End date from which to include tasks (TODO)",
                         Aliases: []string{"t"},
                     },
                     &cli.BoolFlag{
                         Name: "frames",
                         Aliases: []string{"x"},
+                        Usage: "Show individual frames for each task",
                     },
                 },
                 Action: func(c *cli.Context) error {
@@ -875,20 +881,20 @@ func main() {
 
             {
                 Name: "status",
-                Usage: "display status of running task",
+                Usage: "Display status of running task",
                 Action: func(c *cli.Context) error {
                     state := getState()
                     if !state.running {
                         fmt.Println("Not running")
                         return nil
                     }
-                    color.Printf("Running: <magenta>%s</> ", state.task.project.name)
-                    hours := state.timeElapsed.Hours()
-                    s := ""
-                    if hours != 1 {
-                        s = "s"
-                    }
-                    color.Printf("<blue>%s</> (%.2f hour%s)\n", state.task.name, hours, s)
+                    color.Printf(
+                        "Running: <magenta>%s</> <blue>%s</> (%s, %s total)\n",
+                        state.task.project.name,
+                        state.task.name,
+                        getHours(state.timeElapsed),
+                        getHours(state.task.getTotal() + state.timeElapsed),
+                    )
                     color.Printf("Started at <green>%s</> (%s ago)\n", state.startTime.Format("15:04"), state.timeElapsed.Round(time.Second))
                     return nil
                 },
@@ -896,7 +902,7 @@ func main() {
 
             {
                 Name: "projects",
-                Usage: "list projects",
+                Usage: "List projects",
                 Action: func(c *cli.Context) error {
                     for _, project := range getProjects() {
                         color.Magenta.Println(project.name)
@@ -907,10 +913,11 @@ func main() {
 
             {
                 Name: "project",
+                Usage: "Manage projects"
                 Subcommands: []*cli.Command{
                     {
                         Name: "add",
-                        Usage: "add a new project",
+                        Usage: "Add a new project",
                         ArgsUsage: "name",
                         Action: func (c *cli.Context) error {
                             name := c.Args().Get(0)
@@ -929,7 +936,7 @@ func main() {
                     },
                     {
                         Name: "rename",
-                        Usage: "rename a project",
+                        Usage: "Rename a project",
                         ArgsUsage: "old_name new_name",
                         BashComplete: projectCompletion,
                         Action: func (c *cli.Context) error {
@@ -951,7 +958,7 @@ func main() {
                     {
                         Name: "remove",
                         Aliases: []string{"rm"},
-                        Usage: "delete a project",
+                        Usage: "Delete a project and all associated tasks",
                         ArgsUsage: "name",
                         BashComplete: projectCompletion,
                         Action: func (c *cli.Context) error {
@@ -974,19 +981,22 @@ func main() {
 
             {
                 Name: "frame",
+                Usage: "Manage recorded frames for a task"
                 Subcommands: []*cli.Command{
                     {
                         Name: "edit",
-                        Usage: "edit a frame",
+                        Usage: "Edit a frame's start and end times",
                         ArgsUsage: "project task frame",
                         BashComplete: projectTaskFrameCompletion,
                         Flags: []cli.Flag{
                             &cli.StringFlag{
                                 Name: "from",
                                 Aliases: []string{"f"},
+                                Usage: "Start date for the timeline",
                             },
                             &cli.StringFlag{
                                 Name: "to",
+                                Usage: "End date for the timeline",
                                 Aliases: []string{"t"},
                             },
                         },
@@ -1060,7 +1070,7 @@ func main() {
                     {
                         Name: "remove",
                         Aliases: []string{"rm"},
-                        Usage: "delete a frame",
+                        Usage: "Delete a frame",
                         ArgsUsage: "project task frame",
                         BashComplete: projectTaskFrameCompletion,
                         Action: func (c *cli.Context) error {
@@ -1109,11 +1119,12 @@ func main() {
             },
 
             {
-                Name: "task",
+                Name: "Task",
+                Usage: "Manage tasks on a project",
                 Subcommands: []*cli.Command{
                     {
                         Name: "rename",
-                        Usage: "rename a task",
+                        Usage: "Rename a task",
                         ArgsUsage: "project old_name new_name",
                         BashComplete: projectTaskCompletion,
                         Action: func (c *cli.Context) error {
@@ -1151,7 +1162,7 @@ func main() {
                     {
                         Name: "remove",
                         Aliases: []string{"rm"},
-                        Usage: "delete a task",
+                        Usage: "Delete a task",
                         ArgsUsage: "project task",
                         BashComplete: projectTaskCompletion,
                         Action: func (c *cli.Context) error {
