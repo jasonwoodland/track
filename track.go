@@ -907,7 +907,7 @@ func main() {
 
             {
                 Name: "project",
-                Usage: "Manage projects"
+                Usage: "Manage projects",
                 Subcommands: []*cli.Command{
                     {
                         Name: "add",
@@ -975,7 +975,7 @@ func main() {
 
             {
                 Name: "frame",
-                Usage: "Manage recorded frames for a task"
+                Usage: "Manage recorded frames for a task",
                 Subcommands: []*cli.Command{
                     {
                         Name: "edit",
