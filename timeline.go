@@ -41,6 +41,8 @@ var Timeline = &cli.Command{
 			to = TimeFromShorthand(v)
 		}
 
+		to = to.Add(-24 * time.Hour)
+
 		query := `
 			with recursive date(d) as (
 				select datetime(?)
