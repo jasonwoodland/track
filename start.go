@@ -50,7 +50,8 @@ var Start = &cli.Command{
 			task = project.AddTask(taskName)
 		}
 
-		if ago, err := time.ParseDuration(c.String("ago")); err == nil {
+		ago, err := time.ParseDuration(c.String("ago"))
+		if err == nil {
 			startTime = startTime.Add(0 - ago)
 		}
 
@@ -58,14 +59,26 @@ var Start = &cli.Command{
 			startTime = startTime.Add(in)
 		}
 
-		color.Printf("Running: <magenta>%s</> <blue>%s</> (%s)\n", project.name, task.name, GetHours(task.GetTotal()))
-		color.Printf("Started at <green>%s</>\n", startTime.Format("15:04"))
-
 		Db.Exec(
 			"insert into frame (task_id, start_time) values ($1, $2)",
 			task.id,
 			startTime.Format(time.RFC3339),
 		)
+
+		if ago != 0 {
+			state := GetState()
+			color.Printf(
+				"Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
+				project.name,
+				task.name,
+				GetHours(state.timeElapsed),
+				GetHours(state.task.GetTotal()+state.timeElapsed),
+			)
+		} else {
+			color.Printf("Running: <magenta>%s</> <blue>%s</> (%s)\n", project.name, task.name, GetHours(task.GetTotal()))
+		}
+
+		color.Printf("Started at <green>%s</>\n", startTime.Format("15:04"))
 		return nil
 	},
 }
