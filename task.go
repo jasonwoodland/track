@@ -80,7 +80,7 @@ func (t *Task) GetTotal() (d time.Duration) {
 	return
 }
 
-var TaskCmd = &cli.Command{
+var TaskCmds = &cli.Command{
 	Name:  "task",
 	Usage: "Manage tasks on a project",
 	Subcommands: []*cli.Command{

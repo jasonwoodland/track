@@ -42,9 +42,10 @@ func main() {
 			Timeline,
 			Log,
 			Status,
-			ProjectCmd,
+			ProjectCmds,
+			TaskCmds,
 			Projects,
-			FrameCmd,
+			FrameCmds,
 		},
 	}
 

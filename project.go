@@ -104,7 +104,7 @@ func (p *Project) AddTask(name string) *Task {
 	}
 }
 
-var ProjectCmd = &cli.Command{
+var ProjectCmds = &cli.Command{
 	Name:  "project",
 	Usage: "Manage projects",
 	Subcommands: []*cli.Command{

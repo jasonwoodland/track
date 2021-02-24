@@ -16,7 +16,7 @@ type Frame struct {
 	endTime   time.Time
 }
 
-var FrameCmd = &cli.Command{
+var FrameCmds = &cli.Command{
 	Name:  "frame",
 	Usage: "Manage recorded frames for a task",
 	Subcommands: []*cli.Command{
