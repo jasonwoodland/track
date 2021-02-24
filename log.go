@@ -148,7 +148,7 @@ var Log = &cli.Command{
 						frame.endTime = time.Now()
 					}
 					color.Printf(
-						"	<gray>[%v]</> <green>%s - %s</> <default>(%s)</>\n",
+						"    <gray>[%v]</> <green>%s - %s</> <default>(%s)</>\n",
 						i,
 						frame.startTime.Format("Mon Jan 02 15:04"),
 						frame.endTime.Format("15:04"),
