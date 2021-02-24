@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"strconv"
 	"time"
 
@@ -19,6 +20,79 @@ var FrameCmd = &cli.Command{
 	Name:  "frame",
 	Usage: "Manage recorded frames for a task",
 	Subcommands: []*cli.Command{
+		{
+			Name:         "add",
+			Usage:        "Add a frame",
+			ArgsUsage:    "project task duration",
+			BashComplete: ProjectTaskFrameCompletion,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "offset",
+					Aliases: []string{"o"},
+					Usage:   "Duration to offset the start and time by (eg. --offset -5m; add a frame which finished 5 minutes ago)",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				if c.Args().Len() != 3 {
+					cli.ShowSubcommandHelp(c)
+					return nil
+				}
+
+				projectName := c.Args().Get(0)
+				taskName := c.Args().Get(1)
+				duration, err := time.ParseDuration(c.Args().Get(2))
+
+				if err != nil {
+					log.Fatalf("Bad duration: %s", c.Args().Get(2))
+				}
+
+				project := GetProjectByName(projectName)
+
+				if project == nil {
+					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
+					return nil
+				}
+
+				task := project.GetTask(taskName)
+
+				if task == nil {
+					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
+					return nil
+				}
+
+				startTime := time.Now().Add(0 - duration)
+				endTime := time.Now()
+
+				if o, err := time.ParseDuration(c.String("offset")); err == nil {
+					startTime = startTime.Add(o)
+					endTime = endTime.Add(o)
+				}
+
+				Db.Exec(
+					"insert into frame (task_id, start_time, end_time) values ($1, $2, $3)",
+					task.id,
+					startTime.Format(time.RFC3339),
+					endTime.Format(time.RFC3339),
+				)
+
+				color.Printf(
+					"Added: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
+					project.name,
+					task.name,
+					GetHours(duration),
+					GetHours(task.GetTotal()+duration),
+				)
+
+				color.Printf(
+					"  <gray>[%v]</> <green>%s - %s</> <default>(%s)</>\n",
+					task.getNumFrames()-1,
+					startTime.Format("Mon Jan 02 15:04"),
+					endTime.Format("15:04"),
+					GetHours(endTime.Sub(startTime)),
+				)
+				return nil
+			},
+		},
 		{
 			Name:         "edit",
 			Usage:        "Edit a frame's start and end times",

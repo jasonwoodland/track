@@ -31,6 +31,18 @@ func GetTaskById(id int64) (t Task) {
 	return
 }
 
+func (t *Task) getNumFrames() (n int) {
+	rows, err := Db.Query("select count(*) from frame where task_id = $1", t.id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if rows.Next() {
+		rows.Scan(&n)
+		return
+	}
+	return 0
+}
+
 func (t *Task) GetFrames() (frames []*Frame) {
 	rows, err := Db.Query("select id, start_time, end_time from frame where task_id = $1", t.id)
 	if err != nil {
