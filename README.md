@@ -20,9 +20,9 @@ cp $GOPATH/src/github.com/jasonwoodland.com/track/completion/_track /usr/local/s
 
 # TODO
 
-- [ ] show totals for tasks when start/stop/status (add all frames for a total)
+- [x] show totals for tasks when start/stop/status (add all frames for a total)
 - [ ] add 'add' command
-- [ ] add confirmations for delete
+- [x] add confirmations for delete
 - [ ] add tags for tasks [closed]
 - [ ] log `--csv` output
 - [ ] sql migrations
