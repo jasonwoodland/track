@@ -80,7 +80,7 @@ var FrameCmds = &cli.Command{
 					project.name,
 					task.name,
 					GetHours(duration),
-					GetHours(task.GetTotal()+duration),
+					GetHours(task.GetTotal()),
 				)
 
 				color.Printf(
