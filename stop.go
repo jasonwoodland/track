@@ -28,10 +28,12 @@ var Stop = &cli.Command{
 
 		if ago, err := time.ParseDuration(c.String("ago")); err == nil {
 			endTime = endTime.Add(0 - ago)
+			state.timeElapsed -= ago
 		}
 
 		if in, err := time.ParseDuration(c.String("in")); err == nil {
 			endTime = endTime.Add(in)
+			state.timeElapsed += in
 		}
 
 		res, err := Db.Exec(
