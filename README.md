@@ -18,12 +18,18 @@ For ZSH completion, you need to copy `completion/_track` into your `$FPATH`.
 cp $GOPATH/src/github.com/jasonwoodland.com/track/completion/_track /usr/local/share/zsh/site-functions/_track
 ```
 
-# TODO
+# Todo
 
 - [x] show totals for tasks when start/stop/status (add all frames for a total)
-- [ ] add 'add' command
+- [x] add 'frame add' command
 - [x] add confirmations for delete
-- [ ] add tags for tasks [closed]
 - [ ] log `--csv` output
 - [ ] sql migrations
 - [ ] desktop notifications for running tasks
+- [ ] add complete command
+        add complete_at date column on task
+        usage: t complete [--reset] project task
+          sets the complete_at field for task
+        task subcommands, start, will check if complete_at is set, and show a
+        confirmation prompt before continuing.
+        log|timeline -c 02 will show tasks completed in february.
