@@ -33,3 +33,7 @@ cp $GOPATH/src/github.com/jasonwoodland.com/track/completion/_track /usr/local/s
         task subcommands, start, will check if complete_at is set, and show a
         confirmation prompt before continuing.
         log|timeline -c 02 will show tasks completed in february.
+- [x] add `frame move project task frame new_project new_task` command
+- [ ] show the frame id when starting/stopping for quick revisions
+- [ ] add `add`/`sub` commands to alter the start time of the running task
+- [ ] refactor: normalize output/logging, create convenience functions for printProject, printTask, printFrame

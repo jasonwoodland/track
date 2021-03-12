@@ -94,3 +94,56 @@ func ProjectTaskFrameCompletion(c *cli.Context) {
 		}
 	}
 }
+func ProjectTaskFrameProjectTaskCompletion(c *cli.Context) {
+	if ShowFlagCompletion(c) {
+		return
+	}
+
+	if c.NArg() < 3 {
+		if c.NArg() == 0 {
+			for _, p := range GetProjects() {
+				fmt.Println(p.name)
+			}
+			return
+		}
+
+		p := GetProjectByName(c.Args().Get(0))
+
+		if c.NArg() == 1 {
+			for _, t := range p.GetTasks() {
+				fmt.Println(t.name)
+			}
+			return
+		}
+
+		t := p.GetTask(c.Args().Get(1))
+
+		if c.NArg() == 2 {
+			frames := t.GetFrames()
+			for i, f := range frames {
+				fmt.Printf(
+					"%v:%s - %s\n",
+					i,
+					f.startTime.Format("Mon Jan 02 15:04"),
+					f.endTime.Format("15:04"),
+				)
+			}
+		}
+	}
+
+	if c.NArg() == 3 {
+		for _, p := range GetProjects() {
+			fmt.Println(p.name)
+		}
+		return
+	}
+
+	p := GetProjectByName(c.Args().Get(0))
+
+	if c.NArg() == 4 {
+		for _, t := range p.GetTasks() {
+			fmt.Println(t.name)
+		}
+		return
+	}
+}

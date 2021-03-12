@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -218,6 +219,83 @@ var FrameCmds = &cli.Command{
 					frame.id,
 				)
 				color.Printf("Removed frame <gray>[%v]</> on task <blue>%s</>, on project <magenta>%s</>\n", frameIndex, taskName, projectName)
+				return nil
+			},
+		},
+		{
+			Name:         "move",
+			Aliases:      []string{"mv"},
+			Usage:        "Move a frame to another project/task",
+			ArgsUsage:    "project task frame new_project new_task",
+			BashComplete: ProjectTaskFrameProjectTaskCompletion,
+			Action: func(c *cli.Context) error {
+				if c.Args().Len() != 5 {
+					cli.ShowSubcommandHelp(c)
+					return nil
+				}
+
+				projectName := c.Args().Get(0)
+				taskName := c.Args().Get(1)
+				frameIndex, _ := strconv.Atoi(c.Args().Get(2))
+				newProjectName := c.Args().Get(3)
+				newTaskName := c.Args().Get(4)
+
+				project := GetProjectByName(projectName)
+
+				if project == nil {
+					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
+					return nil
+				}
+
+				task := project.GetTask(taskName)
+
+				if task == nil {
+					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
+					return nil
+				}
+
+				frames := task.GetFrames()
+
+				if frameIndex > len(frames)-1 {
+					color.Printf("Frame <gray>[%v]</> doesn't exist on <magenta>%s</> <blue>%s</>\n", frameIndex, taskName, projectName)
+					return nil
+				}
+
+				newProject := GetProjectByName(newProjectName)
+
+				if newProject == nil {
+					color.Printf("Project <magenta>%s</> doesn't exist\n", newProjectName)
+					return nil
+				}
+
+				newTask := newProject.GetTask(newTaskName)
+
+				if newTask == nil {
+					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", newTaskName, newProjectName)
+					return nil
+				}
+
+				if !Confirm(
+					color.Sprintf(
+						"Move frame <gray>[%v]</> from <magenta>%s</> <blue>%s</> to <magenta>%s</> <blue>%s</>?",
+						frameIndex,
+						projectName,
+						taskName,
+						newProjectName,
+						newTaskName,
+					),
+					false,
+				) {
+					return nil
+				}
+
+				frame := frames[frameIndex]
+				Db.Exec(
+					"update frame set task_id = $1 where id = $2",
+					newTask.id,
+					frame.id,
+				)
+				fmt.Println("Moved")
 				return nil
 			},
 		},
