@@ -57,8 +57,8 @@ var FrameCmds = &cli.Command{
 				task := project.GetTask(taskName)
 
 				if task == nil {
-					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
-					return nil
+					color.Printf("Adding task <blue>%s</>\n", taskName)
+					task = project.AddTask(taskName)
 				}
 
 				startTime := time.Now().Add(0 - duration)
@@ -269,10 +269,9 @@ var FrameCmds = &cli.Command{
 				}
 
 				newTask := newProject.GetTask(newTaskName)
-
-				if newTask == nil {
-					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", newTaskName, newProjectName)
-					return nil
+				if task == nil {
+					color.Printf("Adding task <blue>%s</>\n", taskName)
+					task = project.AddTask(taskName)
 				}
 
 				if !Confirm(
