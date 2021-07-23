@@ -37,3 +37,4 @@ cp $GOPATH/src/github.com/jasonwoodland.com/track/completion/_track /usr/local/s
 - [ ] show the frame id when starting/stopping for quick revisions
 - [ ] add `add`/`sub` commands to alter the start time of the running task
 - [ ] refactor: normalize output/logging, create convenience functions for printProject, printTask, printFrame
+- [ ] [timeline] if a frame spans over two dates, it is not included (eg stockup dev 0, acs-api)
