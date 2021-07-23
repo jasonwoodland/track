@@ -48,14 +48,12 @@ var FrameCmds = &cli.Command{
 				}
 
 				project := GetProjectByName(projectName)
-
 				if project == nil {
 					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
 					return nil
 				}
 
 				task := project.GetTask(taskName)
-
 				if task == nil {
 					color.Printf("Adding task <blue>%s</>\n", taskName)
 					task = project.AddTask(taskName)
@@ -122,21 +120,18 @@ var FrameCmds = &cli.Command{
 				frameIndex, _ := strconv.Atoi(c.Args().Get(2))
 
 				project := GetProjectByName(projectName)
-
 				if project == nil {
 					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
 					return nil
 				}
 
 				task := project.GetTask(taskName)
-
 				if task == nil {
 					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
 					return nil
 				}
 
 				frames := task.GetFrames()
-
 				if frameIndex > len(frames) {
 					color.Printf("Frame <gray>[%v]</> doesn't exist on task <blue>%s</>, on project <magenta>%s</>\n", frameIndex, taskName, projectName)
 					return nil
@@ -189,21 +184,18 @@ var FrameCmds = &cli.Command{
 				frameIndex, _ := strconv.Atoi(c.Args().Get(2))
 
 				project := GetProjectByName(projectName)
-
 				if project == nil {
 					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
 					return nil
 				}
 
 				task := project.GetTask(taskName)
-
 				if task == nil {
 					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
 					return nil
 				}
 
 				frames := task.GetFrames()
-
 				if frameIndex > len(frames)-1 {
 					color.Printf("Frame <gray>[%v]</> doesn't exist on <magenta>%s</> <blue>%s</>\n", frameIndex, taskName, projectName)
 					return nil
@@ -241,28 +233,24 @@ var FrameCmds = &cli.Command{
 				newTaskName := c.Args().Get(4)
 
 				project := GetProjectByName(projectName)
-
 				if project == nil {
 					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
 					return nil
 				}
 
 				task := project.GetTask(taskName)
-
 				if task == nil {
 					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
 					return nil
 				}
 
 				frames := task.GetFrames()
-
 				if frameIndex > len(frames)-1 {
 					color.Printf("Frame <gray>[%v]</> doesn't exist on <magenta>%s</> <blue>%s</>\n", frameIndex, taskName, projectName)
 					return nil
 				}
 
 				newProject := GetProjectByName(newProjectName)
-
 				if newProject == nil {
 					color.Printf("Project <magenta>%s</> doesn't exist\n", newProjectName)
 					return nil
