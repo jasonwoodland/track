@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gookit/color"
 	"github.com/urfave/cli/v2"
-	"time"
 )
 
 var Start = &cli.Command{
@@ -19,6 +20,11 @@ var Start = &cli.Command{
 		&cli.StringFlag{
 			Name:  "in",
 			Usage: "Start tracking in a given duration (eg. --in 5m)",
+		},
+		&cli.BoolFlag{
+			Name:    "watch",
+			Aliases: []string{"w"},
+			Usage:   "Output the current status to the screen periodically",
 		},
 	},
 	BashComplete: ProjectTaskCompletion,
@@ -65,20 +71,50 @@ var Start = &cli.Command{
 			startTime.Format(time.RFC3339),
 		)
 
-		if ago != 0 {
-			state := GetState()
-			color.Printf(
-				"Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
-				project.name,
-				task.name,
-				GetHours(state.timeElapsed),
-				GetHours(state.task.GetTotal()+state.timeElapsed),
-			)
+		if c.Bool("watch") {
+			printStatus := func() {
+				state := GetState()
+				if !state.running {
+					fmt.Println("Not running\033[J")
+					return
+				}
+				color.Printf(
+					"Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
+					state.task.project.name,
+					state.task.name,
+					GetHours(state.timeElapsed),
+					GetHours(state.task.GetTotal()+state.timeElapsed),
+				)
+				color.Printf("Started at <green>%s</> (%s ago)\033[K\n", state.startTime.Format("15:04"), state.timeElapsed.Round(time.Second))
+			}
+
+			Cleanup = func() {
+				printStatus()
+			}
+
+			fmt.Printf("\033[?1049h\033[H")
+			for {
+				printStatus()
+				time.Sleep(time.Second)
+				fmt.Printf("\033[H")
+			}
 		} else {
-			color.Printf("Running: <magenta>%s</> <blue>%s</> (%s)\n", project.name, task.name, GetHours(task.GetTotal()))
+			if ago != 0 {
+				state := GetState()
+				color.Printf(
+					"Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
+					project.name,
+					task.name,
+					GetHours(state.timeElapsed),
+					GetHours(state.task.GetTotal()+state.timeElapsed),
+				)
+			} else {
+				color.Printf("Running: <magenta>%s</> <blue>%s</> (%s)\n", project.name, task.name, GetHours(task.GetTotal()))
+			}
+
+			color.Printf("Started at <green>%s</>\n", startTime.Format("15:04"))
 		}
 
-		color.Printf("Started at <green>%s</>\n", startTime.Format("15:04"))
 		return nil
 	},
 }

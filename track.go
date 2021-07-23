@@ -11,6 +11,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+var Cleanup = func() {}
+
 func main() {
 	openDb()
 	defer Db.Close()
@@ -27,6 +29,7 @@ func main() {
 		<-c
 		fmt.Println()
 		fmt.Printf("\033[?1049l")
+		Cleanup()
 		os.Exit(0)
 	}()
 
