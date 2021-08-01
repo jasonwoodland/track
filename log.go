@@ -40,7 +40,8 @@ var Log = &cli.Command{
 			from = TimeFromShorthand(v)
 		}
 		if v := c.String("to"); v != "" {
-			to = TimeFromShorthand(v)
+			// Add a day so the --to flag day is included in the result
+			to = TimeFromShorthand(v).Add(time.Hour * 24)
 		}
 
 		query := `
@@ -48,8 +49,12 @@ var Log = &cli.Command{
 				p.name,
 				t.name,
 				sum(strftime("%s", end_time) - strftime("%s", start_time)) as total,
-				min(start_time) as start_date,
-				max(end_time) as end_date,
+
+				-- We're only filtering by these max start_date/min end_date,
+				-- So if any frames are within the --from/--to flags, we inlcude the
+				-- in the results
+				max(start_time) as start_date,
+				min(end_time) as end_date,
 				(
 					select
 						sum(strftime("%s", end_time) - strftime("%s", start_time)) as total
@@ -144,8 +149,12 @@ var Log = &cli.Command{
 			if showFrames {
 				frames := GetProjectByName(r.projectName).GetTask(r.taskName).GetFrames()
 				for i, frame := range frames {
-					if frame.endTime.Equal(time.Time{}) {
-						frame.endTime = time.Now()
+					// Don't print frames that fall outside of the --from/--to flags
+					if frame.startTime.Before(from) {
+						continue
+					}
+					if frame.endTime.After(to) {
+						continue
 					}
 					color.Printf(
 						"    <gray>[%v]</> <green>%s - %s</> <default>(%s)</>\n",
