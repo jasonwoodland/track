@@ -5,10 +5,7 @@ A time tracking CLI tool written in Go.
 # Installation
 
 ```sh
-go get github.com/jasonwoodland/track
-cd $GOPATH/src/github.com/jasonwoodland/track
-GOBIN="/usr/local/bin" go install
-
+GOBIN="/usr/local/bin" sudo go install github.com/jasonwoodland/track
 ```
 
 ## ZSH Completion
