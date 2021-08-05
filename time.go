@@ -20,6 +20,33 @@ func (t *Time) Scan(v interface{}) error {
 	return nil
 }
 
+func MonthFromShorthand(v string) (t time.Time) {
+	layouts := []string{
+		// Month
+		"1",
+		"01",
+		// Month with year
+		"0601",
+		"06-01",
+		"200601",
+		"2006-01",
+	}
+	for _, l := range layouts {
+		if len(l) == len(v) {
+			t, err := time.Parse(l, v)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if t.Year() == 0 {
+				t = t.AddDate(time.Now().Year(), 0, 0)
+			}
+			return t
+		}
+	}
+	log.Fatalf("bad format provided: %s", v)
+	return
+}
+
 func TimeFromShorthand(v string) (t time.Time) {
 	layouts := []string{
 		// Month
@@ -75,9 +102,9 @@ func TimeFromShorthand(v string) (t time.Time) {
 
 func GetHours(d time.Duration) string {
 	hours := d.Hours()
-	s := ""
-	if hours != 1 {
-		s = "s"
-	}
-	return fmt.Sprintf("%.2f hour%s", hours, s)
+	// s := ""
+	// if hours != 1 {
+	// 	s = "s"
+	// }
+	return fmt.Sprintf("%.2f h", hours)
 }

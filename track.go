@@ -49,6 +49,7 @@ func main() {
 			TaskCmds,
 			Projects,
 			FrameCmds,
+			Report,
 		},
 	}
 
