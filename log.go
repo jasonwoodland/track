@@ -40,8 +40,7 @@ var Log = &cli.Command{
 			from = TimeFromShorthand(v)
 		}
 		if v := c.String("to"); v != "" {
-			// Add a day so the --to flag day is included in the result
-			to = TimeFromShorthand(v).Add(time.Hour * 24)
+			to = TimeFromShorthand(v)
 		}
 
 		query := `
