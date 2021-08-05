@@ -173,7 +173,13 @@ var Timeline = &cli.Command{
 						color.Printf("<green> ● </>")
 					}
 				} else {
-					fmt.Printf("   ")
+					t, _ := time.Parse("2006-01-02 00:00:00", date)
+					switch t.Weekday() {
+					case time.Saturday, time.Sunday:
+						color.Printf("<gray> ○ </>")
+					default:
+						fmt.Printf("   ")
+					}
 				}
 			}
 			color.Printf("<gray>┃</>\n")
