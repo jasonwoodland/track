@@ -133,17 +133,13 @@ var Log = &cli.Command{
 			r.projectDuration *= time.Second
 			if r.projectName != prevProject {
 				hours := r.projectDuration.Hours()
-				s := ""
-				if hours != 1 {
-					s = "s"
-				}
 				if prevProject != "" {
 					fmt.Println()
 				}
-				color.Printf("Project: <magenta>%s</> (%.2f hour%s)\n", r.projectName, hours, s)
+				color.Printf("Project: <magenta>%s</> %.2f h\n", r.projectName, hours)
 				prevProject = r.projectName
 			}
-			color.Printf("  <blue>%s</> (%s)\n", r.taskName, GetHours(r.totalDuration))
+			color.Printf("  <blue>%s</> %s\n", r.taskName, GetHours(r.totalDuration))
 
 			if showFrames {
 				frames := GetProjectByName(r.projectName).GetTask(r.taskName).GetFrames()
@@ -156,7 +152,7 @@ var Log = &cli.Command{
 						continue
 					}
 					color.Printf(
-						"    <gray>[%v]</> <green>%s - %s</> <default>(%s)</>\n",
+						"    <gray>[%v]</> <green>%s - %s</> %s\n",
 						i,
 						frame.startTime.Format("Mon Jan 02 15:04"),
 						frame.endTime.Format("15:04"),
