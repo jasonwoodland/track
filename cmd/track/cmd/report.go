@@ -26,7 +26,7 @@ var Report = &cli.Command{
 		fromDate := util.MonthFromShorthand(c.Args().Get(0))
 		toDate := time.Date(fromDate.Year(), fromDate.Month()+1, 1, 0, 0, 0, 0, time.UTC)
 
-		qry := `
+		query := `
 			select
 				p.name,
 				t.name,
@@ -39,7 +39,7 @@ var Report = &cli.Command{
 			group by t.id
 			having
 				end_time > ? and end_time < ?
-			order by p.name, t.name, start_time;
+			order by p.name, start_time;
 		`
 
 		params := []interface{}{
@@ -47,7 +47,7 @@ var Report = &cli.Command{
 			toDate.Format(time.RFC3339),
 		}
 
-		rows, err := db.Db.Query(qry, params...)
+		rows, err := db.Db.Query(query, params...)
 		if err != nil {
 			log.Fatal(err)
 		}
