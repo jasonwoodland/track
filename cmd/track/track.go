@@ -7,15 +7,16 @@ import (
 	"os/signal"
 	"strings"
 
+	"github.com/jasonwoodland/track/cmd/track/cmd"
+	"github.com/jasonwoodland/track/pkg/cleanup"
+	"github.com/jasonwoodland/track/pkg/db"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/urfave/cli/v2"
 )
 
-var Cleanup = func() {}
-
 func main() {
-	openDb()
-	defer Db.Close()
+	db.OpenDb()
+	defer db.Db.Close()
 
 	// Fix escaped hashes which zsh completion adds to cli args
 	for i, a := range os.Args {
@@ -29,7 +30,7 @@ func main() {
 		<-c
 		fmt.Println()
 		fmt.Printf("\033[?1049l")
-		Cleanup()
+		cleanup.Cleanup()
 		os.Exit(0)
 	}()
 
@@ -39,17 +40,17 @@ func main() {
 		EnableBashCompletion: true,
 
 		Commands: cli.Commands{
-			Start,
-			Cancel,
-			Stop,
-			Timeline,
-			Log,
-			Status,
-			ProjectCmds,
-			TaskCmds,
-			Projects,
-			FrameCmds,
-			Report,
+			cmd.Start,
+			cmd.Cancel,
+			cmd.Stop,
+			cmd.Timeline,
+			cmd.Log,
+			cmd.Status,
+			cmd.ProjectCmds,
+			cmd.TaskCmds,
+			cmd.Projects,
+			cmd.FrameCmds,
+			cmd.Report,
 		},
 	}
 

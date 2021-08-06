@@ -1,10 +1,15 @@
-package main
+package cmd
 
 import (
 	"fmt"
 	"time"
 
 	"github.com/gookit/color"
+	"github.com/jasonwoodland/track/pkg/cleanup"
+	"github.com/jasonwoodland/track/pkg/completion"
+	"github.com/jasonwoodland/track/pkg/db"
+	"github.com/jasonwoodland/track/pkg/model"
+	"github.com/jasonwoodland/track/pkg/util"
 	"github.com/urfave/cli/v2"
 )
 
@@ -27,7 +32,7 @@ var Start = &cli.Command{
 			Usage:   "Output the current status to the screen periodically",
 		},
 	},
-	BashComplete: ProjectTaskCompletion,
+	BashComplete: completion.ProjectTaskCompletion,
 	Action: func(c *cli.Context) error {
 		startTime := time.Now()
 
@@ -38,13 +43,13 @@ var Start = &cli.Command{
 			return nil
 		}
 
-		state := GetState()
-		if state != nil && state.running {
+		state := model.GetState()
+		if state != nil && state.Running {
 			fmt.Println("Task already running")
 			return nil
 		}
 
-		project := GetProjectByName(projectName)
+		project := model.GetProjectByName(projectName)
 		if project == nil {
 			color.Printf("Project <magenta>%s</> doesn't exists\n", projectName)
 			return nil
@@ -65,32 +70,32 @@ var Start = &cli.Command{
 			startTime = startTime.Add(in)
 		}
 
-		Db.Exec(
+		db.Db.Exec(
 			"insert into frame (task_id, start_time) values ($1, $2)",
-			task.id,
+			task.Id,
 			startTime.Format(time.RFC3339),
 		)
 
 		if c.Bool("watch") {
 			printStatus := func() {
-				state := GetState()
-				if !state.running {
+				state := model.GetState()
+				if !state.Running {
 					fmt.Println("Not running\033[J")
 					return
 				}
 				color.Printf(
 					"Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
-					state.task.project.name,
-					state.task.name,
-					GetHours(state.timeElapsed),
-					GetHours(state.task.GetTotal()+state.timeElapsed),
+					state.Task.Project.Name,
+					state.Task.Name,
+					util.GetHours(state.TimeElapsed),
+					util.GetHours(state.Task.GetTotal()+state.TimeElapsed),
 				)
-				color.Printf("Started at <green>%s</> (%s ago)\033[K\n", state.startTime.Format("15:04"), state.timeElapsed.Round(time.Second))
+				color.Printf("Started at <green>%s</> (%s ago)\033[K\n", state.StartTime.Format("15:04"), state.TimeElapsed.Round(time.Second))
 			}
 
-			Cleanup = func() {
+			cleanup.SetCleanupFn(func() {
 				printStatus()
-			}
+			})
 
 			fmt.Printf("\033[?1049h\033[H")
 			for {
@@ -100,16 +105,16 @@ var Start = &cli.Command{
 			}
 		} else {
 			if ago != 0 {
-				state := GetState()
+				state := model.GetState()
 				color.Printf(
 					"Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
-					project.name,
-					task.name,
-					GetHours(state.timeElapsed),
-					GetHours(state.task.GetTotal()+state.timeElapsed),
+					project.Name,
+					task.Name,
+					util.GetHours(state.TimeElapsed),
+					util.GetHours(state.Task.GetTotal()+state.TimeElapsed),
 				)
 			} else {
-				color.Printf("Running: <magenta>%s</> <blue>%s</> (%s)\n", project.name, task.name, GetHours(task.GetTotal()))
+				color.Printf("Running: <magenta>%s</> <blue>%s</> (%s)\n", project.Name, task.Name, util.GetHours(task.GetTotal()))
 			}
 
 			color.Printf("Started at <green>%s</>\n", startTime.Format("15:04"))

@@ -1,10 +1,13 @@
-package main
+package cmd
 
 import (
 	"log"
 	"time"
 
 	"github.com/gookit/color"
+	"github.com/jasonwoodland/track/pkg/db"
+	"github.com/jasonwoodland/track/pkg/mytime"
+	"github.com/jasonwoodland/track/pkg/util"
 	"github.com/urfave/cli/v2"
 )
 
@@ -20,7 +23,7 @@ var Report = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		fromDate := MonthFromShorthand(c.Args().Get(0))
+		fromDate := util.MonthFromShorthand(c.Args().Get(0))
 		toDate := time.Date(fromDate.Year(), fromDate.Month()+1, 1, 0, 0, 0, 0, time.UTC)
 
 		qry := `
@@ -44,7 +47,7 @@ var Report = &cli.Command{
 			toDate.Format(time.RFC3339),
 		}
 
-		rows, err := Db.Query(qry, params...)
+		rows, err := db.Db.Query(qry, params...)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -64,8 +67,8 @@ var Report = &cli.Command{
 			rows.Scan(
 				&r.projectName,
 				&r.taskName,
-				(*Time)(&r.startDate),
-				(*Time)(&r.endDate),
+				(*mytime.Time)(&r.startDate),
+				(*mytime.Time)(&r.endDate),
 				&r.taskDuration,
 			)
 			r.taskDuration *= time.Second
@@ -81,7 +84,7 @@ var Report = &cli.Command{
 				"  <green>%s - %s</> %7s <blue>%-*s</>\n",
 				r.startDate.Format("Mon Jan 02"),
 				r.endDate.Format("Mon Jan 02"),
-				GetHours(r.taskDuration),
+				util.GetHours(r.taskDuration),
 				50,
 				r.taskName,
 			)

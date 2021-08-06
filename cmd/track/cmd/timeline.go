@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -9,6 +9,10 @@ import (
 	"time"
 
 	"github.com/gookit/color"
+	"github.com/jasonwoodland/track/pkg/completion"
+	"github.com/jasonwoodland/track/pkg/db"
+	"github.com/jasonwoodland/track/pkg/model"
+	"github.com/jasonwoodland/track/pkg/util"
 	"github.com/urfave/cli/v2"
 )
 
@@ -16,7 +20,7 @@ var Timeline = &cli.Command{
 	Name:         "timeline",
 	Usage:        "Display a timeline showing time spent on tasks for a given date range",
 	ArgsUsage:    "[project] [task]",
-	BashComplete: ProjectTaskCompletion,
+	BashComplete: completion.ProjectTaskCompletion,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:     "from",
@@ -33,12 +37,12 @@ var Timeline = &cli.Command{
 	Action: func(c *cli.Context) error {
 		from := time.Time{}
 		if v := c.String("from"); v != "" {
-			from = TimeFromShorthand(v)
+			from = util.TimeFromShorthand(v)
 		}
 
 		to := time.Now()
 		if v := c.String("to"); v != "" {
-			to = TimeFromShorthand(v)
+			to = util.TimeFromShorthand(v)
 		}
 
 		to = to.Add(-24 * time.Hour)
@@ -82,7 +86,7 @@ var Timeline = &cli.Command{
 			query += "where\n" + strings.Join(whereConds, "\nand\n")
 		}
 
-		rows, err := Db.Query(query, params...)
+		rows, err := db.Db.Query(query, params...)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -152,7 +156,7 @@ var Timeline = &cli.Command{
 		sort.Ints(taskIds)
 
 		for _, taskId := range taskIds {
-			color.Printf("<magenta>%-"+strconv.Itoa(longestProject)+"v</> ", GetTaskById(int64(taskId)).project.name)
+			color.Printf("<magenta>%-"+strconv.Itoa(longestProject)+"v</> ", model.GetTaskById(int64(taskId)).Project.Name)
 			color.Printf("<blue>%-"+strconv.Itoa(longest)+"v</> <gray>┃</>", tasks[taskId])
 			for di, date := range dates {
 				if chart[date][taskId] {

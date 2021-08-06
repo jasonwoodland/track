@@ -1,9 +1,10 @@
-package main
+package completion
 
 import (
 	"fmt"
 	"strings"
 
+	"github.com/jasonwoodland/track/pkg/model"
 	"github.com/urfave/cli/v2"
 )
 
@@ -31,8 +32,8 @@ func ProjectCompletion(c *cli.Context) {
 	}
 
 	if c.NArg() == 0 {
-		for _, p := range GetProjects() {
-			fmt.Println(p.name)
+		for _, p := range model.GetProjects() {
+			fmt.Println(p.Name)
 		}
 		return
 	}
@@ -44,17 +45,17 @@ func ProjectTaskCompletion(c *cli.Context) {
 	}
 
 	if c.NArg() == 0 {
-		for _, p := range GetProjects() {
-			fmt.Println(p.name)
+		for _, p := range model.GetProjects() {
+			fmt.Println(p.Name)
 		}
 		return
 	}
 
-	p := GetProjectByName(c.Args().Get(0))
+	p := model.GetProjectByName(c.Args().Get(0))
 
 	if c.NArg() == 1 {
 		for _, t := range p.GetTasks() {
-			fmt.Println(t.name)
+			fmt.Println(t.Name)
 		}
 	}
 }
@@ -65,17 +66,17 @@ func ProjectTaskFrameCompletion(c *cli.Context) {
 	}
 
 	if c.NArg() == 0 {
-		for _, p := range GetProjects() {
-			fmt.Println(p.name)
+		for _, p := range model.GetProjects() {
+			fmt.Println(p.Name)
 		}
 		return
 	}
 
-	p := GetProjectByName(c.Args().Get(0))
+	p := model.GetProjectByName(c.Args().Get(0))
 
 	if c.NArg() == 1 {
 		for _, t := range p.GetTasks() {
-			fmt.Println(t.name)
+			fmt.Println(t.Name)
 		}
 		return
 	}
@@ -88,8 +89,8 @@ func ProjectTaskFrameCompletion(c *cli.Context) {
 			fmt.Printf(
 				"%v:%s - %s\n",
 				i,
-				f.startTime.Format("Mon Jan 02 15:04"),
-				f.endTime.Format("15:04"),
+				f.StartTime.Format("Mon Jan 02 15:04"),
+				f.EndTime.Format("15:04"),
 			)
 		}
 	}
@@ -101,17 +102,17 @@ func ProjectTaskFrameProjectTaskCompletion(c *cli.Context) {
 
 	if c.NArg() < 3 {
 		if c.NArg() == 0 {
-			for _, p := range GetProjects() {
-				fmt.Println(p.name)
+			for _, p := range model.GetProjects() {
+				fmt.Println(p.Name)
 			}
 			return
 		}
 
-		p := GetProjectByName(c.Args().Get(0))
+		p := model.GetProjectByName(c.Args().Get(0))
 
 		if c.NArg() == 1 {
 			for _, t := range p.GetTasks() {
-				fmt.Println(t.name)
+				fmt.Println(t.Name)
 			}
 			return
 		}
@@ -124,25 +125,25 @@ func ProjectTaskFrameProjectTaskCompletion(c *cli.Context) {
 				fmt.Printf(
 					"%v:%s - %s\n",
 					i,
-					f.startTime.Format("Mon Jan 02 15:04"),
-					f.endTime.Format("15:04"),
+					f.StartTime.Format("Mon Jan 02 15:04"),
+					f.EndTime.Format("15:04"),
 				)
 			}
 		}
 	}
 
 	if c.NArg() == 3 {
-		for _, p := range GetProjects() {
-			fmt.Println(p.name)
+		for _, p := range model.GetProjects() {
+			fmt.Println(p.Name)
 		}
 		return
 	}
 
-	p := GetProjectByName(c.Args().Get(0))
+	p := model.GetProjectByName(c.Args().Get(0))
 
 	if c.NArg() == 4 {
 		for _, t := range p.GetTasks() {
-			fmt.Println(t.name)
+			fmt.Println(t.Name)
 		}
 		return
 	}

@@ -1,17 +1,21 @@
-package main
+package cmd
 
 import (
 	"fmt"
-	"github.com/gookit/color"
-	"github.com/urfave/cli/v2"
 	"time"
+
+	"github.com/gookit/color"
+	"github.com/jasonwoodland/track/pkg/completion"
+	"github.com/jasonwoodland/track/pkg/model"
+	"github.com/jasonwoodland/track/pkg/util"
+	"github.com/urfave/cli/v2"
 )
 
 var Status = &cli.Command{
 	Name:  "status",
 	Usage: "Display status of running task",
 	BashComplete: func(c *cli.Context) {
-		ShowFlagCompletion(c)
+		completion.ShowFlagCompletion(c)
 	},
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -22,19 +26,19 @@ var Status = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		printStatus := func() {
-			state := GetState()
-			if !state.running {
+			state := model.GetState()
+			if !state.Running {
 				fmt.Println("Not running\033[J")
 				return
 			}
 			color.Printf(
 				"Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
-				state.task.project.name,
-				state.task.name,
-				GetHours(state.timeElapsed),
-				GetHours(state.task.GetTotal()+state.timeElapsed),
+				state.Task.Project.Name,
+				state.Task.Name,
+				util.GetHours(state.TimeElapsed),
+				util.GetHours(state.Task.GetTotal()+state.TimeElapsed),
 			)
-			color.Printf("Started at <green>%s</> (%s ago)\033[K\n", state.startTime.Format("15:04"), state.timeElapsed.Round(time.Second))
+			color.Printf("Started at <green>%s</> (%s ago)\033[K\n", state.StartTime.Format("15:04"), state.TimeElapsed.Round(time.Second))
 		}
 
 		if c.Bool("watch") {

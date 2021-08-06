@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/gookit/color"
+	"github.com/jasonwoodland/track/pkg/db"
+	"github.com/jasonwoodland/track/pkg/model"
+	"github.com/jasonwoodland/track/pkg/util"
 	"github.com/urfave/cli/v2"
 )
 
@@ -23,20 +26,20 @@ var Stop = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		state := GetState()
+		state := model.GetState()
 		endTime := time.Now()
 
 		if ago, err := time.ParseDuration(c.String("ago")); err == nil {
 			endTime = endTime.Add(0 - ago)
-			state.timeElapsed -= ago
+			state.TimeElapsed -= ago
 		}
 
 		if in, err := time.ParseDuration(c.String("in")); err == nil {
 			endTime = endTime.Add(in)
-			state.timeElapsed += in
+			state.TimeElapsed += in
 		}
 
-		res, err := Db.Exec(
+		res, err := db.Db.Exec(
 			"update frame set end_time = $1 where end_time is null",
 			endTime.Format(time.RFC3339),
 		)
@@ -49,15 +52,15 @@ var Stop = &cli.Command{
 		} else {
 			color.Printf(
 				"Stopped: <magenta>%s</> <blue>%s</> (%s, %s total)\n",
-				state.task.project.name,
-				state.task.name,
-				GetHours(state.timeElapsed),
-				GetHours(state.task.GetTotal()),
+				state.Task.Project.Name,
+				state.Task.Name,
+				util.GetHours(state.TimeElapsed),
+				util.GetHours(state.Task.GetTotal()),
 			)
 			color.Printf(
 				"Finished at <green>%s</> (%s)\n",
 				endTime.Format("15:04"),
-				state.timeElapsed.Round(time.Second),
+				state.TimeElapsed.Round(time.Second),
 			)
 		}
 

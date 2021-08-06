@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -7,15 +7,13 @@ import (
 	"time"
 
 	"github.com/gookit/color"
+	"github.com/jasonwoodland/track/pkg/completion"
+	"github.com/jasonwoodland/track/pkg/db"
+	"github.com/jasonwoodland/track/pkg/dialog"
+	"github.com/jasonwoodland/track/pkg/model"
+	"github.com/jasonwoodland/track/pkg/util"
 	"github.com/urfave/cli/v2"
 )
-
-type Frame struct {
-	id        int64
-	task      *Task
-	startTime time.Time
-	endTime   time.Time
-}
 
 var FrameCmds = &cli.Command{
 	Name:  "frame",
@@ -25,7 +23,7 @@ var FrameCmds = &cli.Command{
 			Name:         "add",
 			Usage:        "Add a frame",
 			ArgsUsage:    "project task duration",
-			BashComplete: ProjectTaskFrameCompletion,
+			BashComplete: completion.ProjectTaskFrameCompletion,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:    "offset",
@@ -47,7 +45,7 @@ var FrameCmds = &cli.Command{
 					log.Fatalf("Bad duration: %s", c.Args().Get(2))
 				}
 
-				project := GetProjectByName(projectName)
+				project := model.GetProjectByName(projectName)
 				if project == nil {
 					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
 					return nil
@@ -67,27 +65,27 @@ var FrameCmds = &cli.Command{
 					endTime = endTime.Add(o)
 				}
 
-				Db.Exec(
+				db.Db.Exec(
 					"insert into frame (task_id, start_time, end_time) values ($1, $2, $3)",
-					task.id,
+					task.Id,
 					startTime.Format(time.RFC3339),
 					endTime.Format(time.RFC3339),
 				)
 
 				color.Printf(
 					"Added: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
-					project.name,
-					task.name,
-					GetHours(duration),
-					GetHours(task.GetTotal()),
+					project.Name,
+					task.Name,
+					util.GetHours(duration),
+					util.GetHours(task.GetTotal()),
 				)
 
 				color.Printf(
 					"  <gray>[%v]</> <green>%s - %s</> <default>(%s)</>\n",
-					task.getNumFrames()-1,
+					task.GetNumFrames()-1,
 					startTime.Format("Mon Jan 02 15:04"),
 					endTime.Format("15:04"),
-					GetHours(endTime.Sub(startTime)),
+					util.GetHours(endTime.Sub(startTime)),
 				)
 				return nil
 			},
@@ -96,7 +94,7 @@ var FrameCmds = &cli.Command{
 			Name:         "edit",
 			Usage:        "Edit a frame's start and end times",
 			ArgsUsage:    "project task frame",
-			BashComplete: ProjectTaskFrameCompletion,
+			BashComplete: completion.ProjectTaskFrameCompletion,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:    "start",
@@ -119,7 +117,7 @@ var FrameCmds = &cli.Command{
 				taskName := c.Args().Get(1)
 				frameIndex, _ := strconv.Atoi(c.Args().Get(2))
 
-				project := GetProjectByName(projectName)
+				project := model.GetProjectByName(projectName)
 				if project == nil {
 					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
 					return nil
@@ -140,11 +138,11 @@ var FrameCmds = &cli.Command{
 				frame := frames[frameIndex]
 
 				if d, err := time.ParseDuration(c.String("start")); err == nil {
-					frame.startTime = frame.startTime.Add(d)
+					frame.StartTime = frame.StartTime.Add(d)
 				}
 
 				if d, err := time.ParseDuration(c.String("end")); err == nil {
-					frame.endTime = frame.endTime.Add(d)
+					frame.EndTime = frame.EndTime.Add(d)
 				}
 
 				// TODO 00:00 shown if the frame is currently running.
@@ -153,16 +151,16 @@ var FrameCmds = &cli.Command{
 				color.Printf(
 					"    <gray>[%v]</> <green>%s - %s</> (%s)\n",
 					frameIndex,
-					frame.startTime.Format("Mon Jan 02 15:04"),
-					frame.endTime.Format("15:04"),
-					GetHours(frame.endTime.Sub(frame.startTime)),
+					frame.StartTime.Format("Mon Jan 02 15:04"),
+					frame.EndTime.Format("15:04"),
+					util.GetHours(frame.EndTime.Sub(frame.StartTime)),
 				)
 
-				Db.Exec(
+				db.Db.Exec(
 					"update frame set start_time = $1, end_time = $2 where id = $3",
-					frame.startTime.Format(time.RFC3339),
-					frame.endTime.Format(time.RFC3339),
-					frame.id,
+					frame.StartTime.Format(time.RFC3339),
+					frame.EndTime.Format(time.RFC3339),
+					frame.Id,
 				)
 				return nil
 			},
@@ -172,7 +170,7 @@ var FrameCmds = &cli.Command{
 			Aliases:      []string{"rm"},
 			Usage:        "Delete a frame",
 			ArgsUsage:    "project task frame",
-			BashComplete: ProjectTaskFrameCompletion,
+			BashComplete: completion.ProjectTaskFrameCompletion,
 			Action: func(c *cli.Context) error {
 				if c.Args().Len() != 3 {
 					cli.ShowSubcommandHelp(c)
@@ -183,7 +181,7 @@ var FrameCmds = &cli.Command{
 				taskName := c.Args().Get(1)
 				frameIndex, _ := strconv.Atoi(c.Args().Get(2))
 
-				project := GetProjectByName(projectName)
+				project := model.GetProjectByName(projectName)
 				if project == nil {
 					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
 					return nil
@@ -201,14 +199,14 @@ var FrameCmds = &cli.Command{
 					return nil
 				}
 
-				if !Confirm(color.Sprintf("Remove frame <gray>[%v]</> on task <blue>%s</>, on project <magenta>%s</>?", frameIndex, taskName, projectName), false) {
+				if !dialog.Confirm(color.Sprintf("Remove frame <gray>[%v]</> on task <blue>%s</>, on project <magenta>%s</>?", frameIndex, taskName, projectName), false) {
 					return nil
 				}
 
 				frame := frames[frameIndex]
-				Db.Exec(
+				db.Db.Exec(
 					"delete from frame where id = $1",
-					frame.id,
+					frame.Id,
 				)
 				color.Printf("Removed frame <gray>[%v]</> on task <blue>%s</>, on project <magenta>%s</>\n", frameIndex, taskName, projectName)
 				return nil
@@ -219,7 +217,7 @@ var FrameCmds = &cli.Command{
 			Aliases:      []string{"mv"},
 			Usage:        "Move a frame to another project/task",
 			ArgsUsage:    "project task frame new_project new_task",
-			BashComplete: ProjectTaskFrameProjectTaskCompletion,
+			BashComplete: completion.ProjectTaskFrameProjectTaskCompletion,
 			Action: func(c *cli.Context) error {
 				if c.Args().Len() != 5 {
 					cli.ShowSubcommandHelp(c)
@@ -232,7 +230,7 @@ var FrameCmds = &cli.Command{
 				newProjectName := c.Args().Get(3)
 				newTaskName := c.Args().Get(4)
 
-				project := GetProjectByName(projectName)
+				project := model.GetProjectByName(projectName)
 				if project == nil {
 					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
 					return nil
@@ -250,7 +248,7 @@ var FrameCmds = &cli.Command{
 					return nil
 				}
 
-				newProject := GetProjectByName(newProjectName)
+				newProject := model.GetProjectByName(newProjectName)
 				if newProject == nil {
 					color.Printf("Project <magenta>%s</> doesn't exist\n", newProjectName)
 					return nil
@@ -262,7 +260,7 @@ var FrameCmds = &cli.Command{
 					task = project.AddTask(taskName)
 				}
 
-				if !Confirm(
+				if !dialog.Confirm(
 					color.Sprintf(
 						"Move frame <gray>[%v]</> from <magenta>%s</> <blue>%s</> to <magenta>%s</> <blue>%s</>?",
 						frameIndex,
@@ -277,10 +275,10 @@ var FrameCmds = &cli.Command{
 				}
 
 				frame := frames[frameIndex]
-				Db.Exec(
+				db.Db.Exec(
 					"update frame set task_id = $1 where id = $2",
-					newTask.id,
-					frame.id,
+					newTask.Id,
+					frame.Id,
 				)
 				fmt.Println("Moved")
 				return nil

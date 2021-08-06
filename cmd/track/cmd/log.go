@@ -1,19 +1,25 @@
-package main
+package cmd
 
 import (
 	"fmt"
-	"github.com/gookit/color"
-	"github.com/urfave/cli/v2"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/gookit/color"
+	"github.com/jasonwoodland/track/pkg/completion"
+	"github.com/jasonwoodland/track/pkg/db"
+	"github.com/jasonwoodland/track/pkg/model"
+	"github.com/jasonwoodland/track/pkg/mytime"
+	"github.com/jasonwoodland/track/pkg/util"
+	"github.com/urfave/cli/v2"
 )
 
 var Log = &cli.Command{
 	Name:         "log",
 	Usage:        "Display time spent on projects and tasks",
 	ArgsUsage:    "[project] [task]",
-	BashComplete: ProjectTaskCompletion,
+	BashComplete: completion.ProjectTaskCompletion,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:    "from",
@@ -37,10 +43,10 @@ var Log = &cli.Command{
 		from := time.Time{}
 		to := time.Now()
 		if v := c.String("from"); v != "" {
-			from = TimeFromShorthand(v)
+			from = util.TimeFromShorthand(v)
 		}
 		if v := c.String("to"); v != "" {
-			to = TimeFromShorthand(v)
+			to = util.TimeFromShorthand(v)
 		}
 
 		query := `
@@ -104,7 +110,7 @@ var Log = &cli.Command{
 			)
 		`
 
-		rows, err := Db.Query(query, params...)
+		rows, err := db.Db.Query(query, params...)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -114,8 +120,8 @@ var Log = &cli.Command{
 			projectName     string
 			taskName        string
 			totalDuration   time.Duration
-			startDate       Time
-			endDate         Time
+			startDate       mytime.Time
+			endDate         mytime.Time
 			projectDuration time.Duration
 		}
 
@@ -125,8 +131,8 @@ var Log = &cli.Command{
 				&r.projectName,
 				&r.taskName,
 				&r.totalDuration,
-				(*Time)(&r.startDate),
-				(*Time)(&r.endDate),
+				(*mytime.Time)(&r.startDate),
+				(*mytime.Time)(&r.endDate),
 				&r.projectDuration,
 			)
 			r.totalDuration *= time.Second
@@ -139,24 +145,24 @@ var Log = &cli.Command{
 				color.Printf("Project: <magenta>%s</> %.2f h\n", r.projectName, hours)
 				prevProject = r.projectName
 			}
-			color.Printf("  <blue>%s</> %s\n", r.taskName, GetHours(r.totalDuration))
+			color.Printf("  <blue>%s</> %s\n", r.taskName, util.GetHours(r.totalDuration))
 
 			if showFrames {
-				frames := GetProjectByName(r.projectName).GetTask(r.taskName).GetFrames()
+				frames := model.GetProjectByName(r.projectName).GetTask(r.taskName).GetFrames()
 				for i, frame := range frames {
 					// Don't print frames that fall outside of the --from/--to flags
-					if frame.startTime.Before(from) {
+					if frame.StartTime.Before(from) {
 						continue
 					}
-					if frame.endTime.After(to) {
+					if frame.EndTime.After(to) {
 						continue
 					}
 					color.Printf(
 						"    <gray>[%v]</> <green>%s - %s</> %s\n",
 						i,
-						frame.startTime.Format("Mon Jan 02 15:04"),
-						frame.endTime.Format("15:04"),
-						GetHours(frame.endTime.Sub(frame.startTime)),
+						frame.StartTime.Format("Mon Jan 02 15:04"),
+						frame.EndTime.Format("15:04"),
+						util.GetHours(frame.EndTime.Sub(frame.StartTime)),
 					)
 				}
 			}
