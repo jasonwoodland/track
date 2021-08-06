@@ -58,8 +58,9 @@ var Log = &cli.Command{
 				-- We're only filtering by these max start_date/min end_date,
 				-- So if any frames are within the --from/--to flags, we inlcude the
 				-- in the results
-				max(start_time) as start_date,
-				min(end_time) as end_date,
+				min(start_time) as start_date,
+				max(end_time) as end_date,
+				sum(strftime("%s", end_time) - strftime("%s", start_time)) task_total,
 				(
 					select
 						sum(strftime("%s", end_time) - strftime("%s", start_time)) as total
@@ -101,13 +102,7 @@ var Log = &cli.Command{
 		}
 
 		query += `
-			order by (
-				select max(start_time)
-				from frame f3
-				left join task t3 on t3.id = task_id
-				where
-					t3.project_id = p.id
-			)
+			order by p.name, start_date
 		`
 
 		rows, err := db.Db.Query(query, params...)
@@ -120,8 +115,9 @@ var Log = &cli.Command{
 			projectName     string
 			taskName        string
 			totalDuration   time.Duration
-			startDate       mytime.Time
-			endDate         mytime.Time
+			startDate       time.Time
+			endDate         time.Time
+			taskDuration    time.Duration
 			projectDuration time.Duration
 		}
 
@@ -133,10 +129,14 @@ var Log = &cli.Command{
 				&r.totalDuration,
 				(*mytime.Time)(&r.startDate),
 				(*mytime.Time)(&r.endDate),
+				&r.taskDuration,
 				&r.projectDuration,
 			)
+
 			r.totalDuration *= time.Second
+			r.taskDuration *= time.Second
 			r.projectDuration *= time.Second
+
 			if r.projectName != prevProject {
 				hours := r.projectDuration.Hours()
 				if prevProject != "" {
@@ -145,18 +145,25 @@ var Log = &cli.Command{
 				color.Printf("Project: <magenta>%s</> %.2f h\n", r.projectName, hours)
 				prevProject = r.projectName
 			}
-			color.Printf("  <blue>%s</> %s\n", r.taskName, util.GetHours(r.totalDuration))
+
+			color.Printf(
+				"  <green>%s - %s</> %7s <blue>%-*s</>\n",
+				r.startDate.Format("Mon Jan 02"),
+				r.endDate.Format("Mon Jan 02"),
+				util.GetHours(r.taskDuration),
+				50,
+				r.taskName,
+			)
 
 			if showFrames {
 				frames := model.GetProjectByName(r.projectName).GetTask(r.taskName).GetFrames()
+
 				for i, frame := range frames {
 					// Don't print frames that fall outside of the --from/--to flags
-					if frame.StartTime.Before(from) {
+					if frame.StartTime.Before(from) || frame.EndTime.After(to) {
 						continue
 					}
-					if frame.EndTime.After(to) {
-						continue
-					}
+
 					color.Printf(
 						"    <gray>[%v]</> <green>%s - %s</> %s\n",
 						i,
