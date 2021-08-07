@@ -35,6 +35,7 @@ func (t *Task) GetNumFrames() (n int) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer rows.Close()
 	if rows.Next() {
 		rows.Scan(&n)
 		return
