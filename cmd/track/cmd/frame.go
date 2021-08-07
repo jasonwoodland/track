@@ -199,7 +199,13 @@ var FrameCmds = &cli.Command{
 					return nil
 				}
 
-				if !dialog.Confirm(color.Sprintf("Remove frame <gray>[%v]</> on task <blue>%s</>, on project <magenta>%s</>?", frameIndex, taskName, projectName), false) {
+				if !dialog.Confirm(color.Sprintf(
+					"Remove frame <green>%s - %s</> on <magenta>%s</> <blue>%s</>?",
+					frames[frameIndex].StartTime.Format("Mon Jan 02 15:04"),
+					frames[frameIndex].EndTime.Format("15:04"),
+					projectName,
+					taskName,
+				), false) {
 					return nil
 				}
 
@@ -208,7 +214,9 @@ var FrameCmds = &cli.Command{
 					"delete from frame where id = $1",
 					frame.Id,
 				)
-				color.Printf("Removed frame <gray>[%v]</> on task <blue>%s</>, on project <magenta>%s</>\n", frameIndex, taskName, projectName)
+
+				color.Println("Removed")
+
 				return nil
 			},
 		},
@@ -262,8 +270,9 @@ var FrameCmds = &cli.Command{
 
 				if !dialog.Confirm(
 					color.Sprintf(
-						"Move frame <gray>[%v]</> from <magenta>%s</> <blue>%s</> to <magenta>%s</> <blue>%s</>?",
-						frameIndex,
+						"Move frame <green>%s - %s</> from <magenta>%s</> <blue>%s</> to <magenta>%s</> <blue>%s</>?",
+						frames[frameIndex].StartTime.Format("Mon Jan 02 15:04"),
+						frames[frameIndex].EndTime.Format("Mon Jan 02"),
 						projectName,
 						taskName,
 						newProjectName,
@@ -280,7 +289,9 @@ var FrameCmds = &cli.Command{
 					newTask.Id,
 					frame.Id,
 				)
+
 				fmt.Println("Moved")
+
 				return nil
 			},
 		},
