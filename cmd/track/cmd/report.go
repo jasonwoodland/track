@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"encoding/csv"
+	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/gookit/color"
@@ -15,9 +18,8 @@ var Report = &cli.Command{
 	Name:      "report",
 	Usage:     "Display monthly report for time spent on projects and tasks",
 	ArgsUsage: "month",
-	// BashComplete: ProjectTaskCompletion,
 	Flags: []cli.Flag{
-		&cli.StringFlag{
+		&cli.BoolFlag{
 			Name:  "csv",
 			Usage: "Output CSV format",
 		},
@@ -60,39 +62,86 @@ var Report = &cli.Command{
 			taskDuration time.Duration
 		}
 
-		var lastProjectName string
+		if c.Bool("csv") {
+			w := csv.NewWriter(os.Stdout)
 
-		for rows.Next() {
-			r := row{}
-			rows.Scan(
-				&r.projectName,
-				&r.taskName,
-				(*mytime.Time)(&r.startDate),
-				(*mytime.Time)(&r.endDate),
-				&r.taskDuration,
-			)
-			r.taskDuration *= time.Second
+			w.Write([]string{
+				"Project",
+				"Task",
+				"Start",
+				"End",
+				"Total",
+			})
 
-			if lastProjectName != r.projectName {
-				if lastProjectName != "" {
-					color.Println()
+			numRows := 0
+
+			for rows.Next() {
+				numRows++
+				r := row{}
+				rows.Scan(
+					&r.projectName,
+					&r.taskName,
+					(*mytime.Time)(&r.startDate),
+					(*mytime.Time)(&r.endDate),
+					&r.taskDuration,
+				)
+				r.taskDuration *= time.Second
+
+				if err := w.Write([]string{
+					r.projectName,
+					r.taskName,
+					r.startDate.Format("Mon Jan 02 2006"),
+					r.endDate.Format("Mon Jan 02 2006"),
+					fmt.Sprintf("%.2f", r.taskDuration.Hours()),
+				}); err != nil {
+					log.Fatalln("error outputting csv:", err)
 				}
-				color.Printf("Project: <magenta>%s</>\n", r.projectName)
 			}
 
-			color.Printf(
-				"  <green>%s - %s</> %7s <blue>%-*s</>\n",
-				r.startDate.Format("Mon Jan 02"),
-				r.endDate.Format("Mon Jan 02"),
-				util.GetHours(r.taskDuration),
-				50,
-				r.taskName,
-			)
+			w.Write([]string{
+				"Total",
+				"",
+				"",
+				"",
+				fmt.Sprintf("=SUM(E2:E%d)", numRows+1),
+			})
 
-			lastProjectName = r.projectName
+			w.Flush()
+		} else {
+			var lastProjectName string
+
+			for rows.Next() {
+				r := row{}
+				rows.Scan(
+					&r.projectName,
+					&r.taskName,
+					(*mytime.Time)(&r.startDate),
+					(*mytime.Time)(&r.endDate),
+					&r.taskDuration,
+				)
+				r.taskDuration *= time.Second
+
+				if lastProjectName != r.projectName {
+					if lastProjectName != "" {
+						color.Println()
+					}
+					color.Printf("Project: <magenta>%s</>\n", r.projectName)
+				}
+
+				color.Printf(
+					"  <green>%s - %s</> %6s <blue>%-*s</>\n",
+					r.startDate.Format("Mon Jan 02"),
+					r.endDate.Format("Mon Jan 02"),
+					util.GetHours(r.taskDuration),
+					50,
+					r.taskName,
+				)
+
+				lastProjectName = r.projectName
+			}
+
+			color.Println()
 		}
-
-		color.Println()
 
 		return nil
 	},
