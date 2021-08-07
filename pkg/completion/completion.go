@@ -60,6 +60,42 @@ func ProjectTaskCompletion(c *cli.Context) {
 	}
 }
 
+func ProjectTaskProjectTaskCompletion(c *cli.Context) {
+	if ShowFlagCompletion(c) {
+		return
+	}
+
+	if c.NArg() == 0 {
+		for _, p := range model.GetProjects() {
+			fmt.Println(p.Name)
+		}
+		return
+	}
+
+	p := model.GetProjectByName(c.Args().Get(0))
+
+	if c.NArg() == 1 {
+		for _, t := range p.GetTasks() {
+			fmt.Println(t.Name)
+		}
+	}
+
+	if c.NArg() == 2 {
+		for _, p := range model.GetProjects() {
+			fmt.Println(p.Name)
+		}
+		return
+	}
+
+	p = model.GetProjectByName(c.Args().Get(0))
+
+	if c.NArg() == 3 {
+		for _, t := range p.GetTasks() {
+			fmt.Println(t.Name)
+		}
+	}
+}
+
 func ProjectTaskFrameCompletion(c *cli.Context) {
 	if ShowFlagCompletion(c) {
 		return

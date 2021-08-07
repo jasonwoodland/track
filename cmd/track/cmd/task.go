@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"log"
+
 	"github.com/gookit/color"
 	"github.com/jasonwoodland/track/pkg/completion"
 	"github.com/jasonwoodland/track/pkg/db"
@@ -71,17 +73,111 @@ var TaskCmds = &cli.Command{
 					return nil
 				}
 
-				if project.GetTask(taskName) == nil {
+				task := project.GetTask(taskName)
+
+				if task == nil {
 					color.Printf("Task <blue>%s</> doesn't exists on project <magenta>%s</>\n", taskName, projectName)
 					return nil
 				}
 
-				if !dialog.Confirm(color.Sprintf("Delete task <blue>%s</> on project <magenta>%s</>?", taskName, projectName), false) {
+				numFrames := task.GetNumFrames()
+				s := "s"
+				if numFrames == 1 {
+					s = ""
+				}
+
+				if !dialog.Confirm(color.Sprintf(
+					"Delete task <blue>%s</> and %d frame%s on project <magenta>%s</>?",
+					taskName,
+					numFrames,
+					s,
+					projectName,
+				), false) {
 					return nil
 				}
 
-				db.Db.Exec("delete from project where name = $1 and project_id = $2", taskName, project.Id)
-				color.Printf("Deleted task <blue>%s</> on project <magenta>%s</>\n", taskName, projectName)
+				db.Db.Exec("delete from task where name = $1 and project_id = $2", taskName, project.Id)
+				color.Printf(
+					"Deleted task <blue>%s</> and %d frame%s on project <magenta>%s</>\n",
+					taskName,
+					numFrames,
+					s,
+					projectName,
+				)
+				return nil
+			},
+		},
+		{
+			Name:         "merge",
+			Usage:        "Merge a task",
+			ArgsUsage:    "from_project from_task to_project to_task",
+			BashComplete: completion.ProjectTaskProjectTaskCompletion,
+			Action: func(c *cli.Context) error {
+				if c.Args().Len() != 4 {
+					cli.ShowSubcommandHelp(c)
+					return nil
+				}
+
+				fromProjectName := c.Args().Get(0)
+				fromTaskName := c.Args().Get(1)
+				toProjectName := c.Args().Get(2)
+				toTaskName := c.Args().Get(3)
+
+				fromProject := model.GetProjectByName(fromProjectName)
+				if fromProject == nil {
+					color.Printf("Project <magenta>%s</> doesn't exists\n", fromProjectName)
+					return nil
+				}
+
+				fromTask := fromProject.GetTask(fromTaskName)
+
+				if fromTask == nil {
+					color.Printf("Task <blue>%s</> doesn't exists on project <magenta>%s</>\n", fromTaskName, fromProjectName)
+					return nil
+				}
+
+				toProject := model.GetProjectByName(toProjectName)
+				if toProject == nil {
+					color.Printf("Project <magenta>%s</> doesn't exists\n", toProjectName)
+					return nil
+				}
+
+				toTask := toProject.GetTask(toTaskName)
+
+				if toTask == nil {
+					color.Printf("Task <blue>%s</> doesn't exists on project <magenta>%s</>\n", toTaskName, toProjectName)
+					return nil
+				}
+
+				numFrames := fromTask.GetNumFrames()
+				s := "s"
+				if numFrames == 1 {
+					s = ""
+				}
+
+				if !dialog.Confirm(color.Sprintf(
+					"Merge %d frame%s from <magenta>%s</> <blue>%s</> into <magenta>%s</> <blue>%s</>?",
+					numFrames,
+					s,
+					fromProjectName,
+					fromTaskName,
+					toProjectName,
+					toTaskName,
+				), false) {
+					return nil
+				}
+
+				_, err := db.Db.Exec("update frame set task_id = $1 where task_id = $2", toTask.Id, fromTask.Id)
+				if err != nil {
+					log.Fatal(err)
+				}
+				_, err = db.Db.Exec("delete from task where id = $1", fromTask.Id)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				color.Println("Merged")
+
 				return nil
 			},
 		},
