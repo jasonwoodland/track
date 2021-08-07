@@ -94,5 +94,5 @@ func GetHours(d time.Duration) string {
 	// if hours != 1 {
 	// 	s = "s"
 	// }
-	return fmt.Sprintf("%.2f h", hours)
+	return fmt.Sprintf("%.2fh", hours)
 }

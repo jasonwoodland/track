@@ -142,12 +142,12 @@ var Log = &cli.Command{
 				if prevProject != "" {
 					fmt.Println()
 				}
-				color.Printf("Project: <magenta>%s</> %.2f h\n", r.projectName, hours)
+				color.Printf("Project: <magenta>%s</> %.2fh\n", r.projectName, hours)
 				prevProject = r.projectName
 			}
 
 			color.Printf(
-				"  <green>%s - %s</> %7s <blue>%-*s</>\n",
+				"  <green>%s - %s</> %6s <blue>%-*s</>\n",
 				r.startDate.Format("Mon Jan 02"),
 				r.endDate.Format("Mon Jan 02"),
 				util.GetHours(r.taskDuration),
