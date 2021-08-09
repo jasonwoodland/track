@@ -1,37 +1,36 @@
-# track
+# Track
 
-A time tracking CLI tool written in Go.
+Time tracking tool written in Go.
 
-# Installation
+## Install
+
+### Building from source
+
+To build from source, you need a working Go environment installed.
+
+You can use the `go` command to install the `track` binary into your `GOPATH`:
 
 ```sh
-GOBIN="/usr/local/bin" sudo go install github.com/jasonwoodland/track
+$ go get github.com/jasonwoodland/track/cmd/...
 ```
 
-## ZSH Completion
+### ZSH Completion
 
-For ZSH completion, you need to copy `completion/_track` into your `$FPATH`.
+For ZSH completion, you need to copy `completion/_track` somewhere into your `$fpath`.
+
 ```sh
-cp $GOPATH/src/github.com/jasonwoodland.com/track/completion/_track /usr/local/share/zsh/site-functions/_track
+curl "https://raw.githubusercontent.com/jasonwoodland/track/main/completion/_track" > /opt/homebrew/share/zsh/site-functions/_track
 ```
 
-# Todo
+## Todo
 
 - [x] show totals for tasks when start/stop/status (add all frames for a total)
 - [x] add 'frame add' command
 - [x] add confirmations for delete
-- [ ] log `--csv` output
-- [ ] sql migrations
-- [ ] desktop notifications for running tasks
-- [ ] add complete command
-        add complete_at date column on task
-        usage: t complete [--reset] project task
-          sets the complete_at field for task
-        task subcommands, start, will check if complete_at is set, and show a
-        confirmation prompt before continuing.
-        log|timeline -c 02 will show tasks completed in february.
-- [x] add `frame move project task frame new_project new_task` command
-- [ ] show the frame id when starting/stopping for quick revisions
+- [x] report `--csv` output
+- [x] sql migrations
+- [ ] add `frame move project task frame new_project new_task` command
 - [ ] add `add`/`sub` commands to alter the start time of the running task
 - [ ] refactor: normalize output/logging, create convenience functions for printProject, printTask, printFrame
-- [ ] [timeline] if a frame spans over two dates, it is not included (eg stockup dev 0, acs-api)
+- [ ] [timeline] if a frame spans over two dates, it is not included
+- [ ] t task merge acs-api feature/some-typo acs-api feature/23/correct-task
