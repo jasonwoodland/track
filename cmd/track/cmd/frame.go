@@ -9,8 +9,8 @@ import (
 	"github.com/gookit/color"
 	"github.com/jasonwoodland/track/pkg/completion"
 	"github.com/jasonwoodland/track/pkg/db"
-	"github.com/jasonwoodland/track/pkg/dialog"
 	"github.com/jasonwoodland/track/pkg/model"
+	"github.com/jasonwoodland/track/pkg/presenter"
 	"github.com/jasonwoodland/track/pkg/util"
 	"github.com/urfave/cli/v2"
 )
@@ -199,7 +199,7 @@ var FrameCmds = &cli.Command{
 					return nil
 				}
 
-				if !dialog.Confirm(color.Sprintf(
+				if !presenter.Confirm(color.Sprintf(
 					"Remove frame <green>%s - %s</> on <magenta>%s</> <blue>%s</>?",
 					frames[frameIndex].StartTime.Format("Mon Jan 02 15:04"),
 					frames[frameIndex].EndTime.Format("15:04"),
@@ -268,7 +268,7 @@ var FrameCmds = &cli.Command{
 					task = project.AddTask(taskName)
 				}
 
-				if !dialog.Confirm(
+				if !presenter.Confirm(
 					color.Sprintf(
 						"Move frame <green>%s - %s</> from <magenta>%s</> <blue>%s</> to <magenta>%s</> <blue>%s</>?",
 						frames[frameIndex].StartTime.Format("Mon Jan 02 15:04"),

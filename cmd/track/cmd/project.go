@@ -4,8 +4,8 @@ import (
 	"github.com/gookit/color"
 	"github.com/jasonwoodland/track/pkg/completion"
 	"github.com/jasonwoodland/track/pkg/db"
-	"github.com/jasonwoodland/track/pkg/dialog"
 	"github.com/jasonwoodland/track/pkg/model"
+	"github.com/jasonwoodland/track/pkg/presenter"
 	"github.com/urfave/cli/v2"
 )
 
@@ -71,7 +71,7 @@ var ProjectCmds = &cli.Command{
 					return nil
 				}
 
-				if !dialog.Confirm(color.Sprintf("Delete project <magenta>%s</>?", name), false) {
+				if !presenter.Confirm(color.Sprintf("Delete project <magenta>%s</>?", name), false) {
 					return nil
 				}
 

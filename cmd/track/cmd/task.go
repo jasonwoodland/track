@@ -6,8 +6,8 @@ import (
 	"github.com/gookit/color"
 	"github.com/jasonwoodland/track/pkg/completion"
 	"github.com/jasonwoodland/track/pkg/db"
-	"github.com/jasonwoodland/track/pkg/dialog"
 	"github.com/jasonwoodland/track/pkg/model"
+	"github.com/jasonwoodland/track/pkg/presenter"
 	"github.com/urfave/cli/v2"
 )
 
@@ -86,7 +86,7 @@ var TaskCmds = &cli.Command{
 					s = ""
 				}
 
-				if !dialog.Confirm(color.Sprintf(
+				if !presenter.Confirm(color.Sprintf(
 					"Delete task <blue>%s</> and %d frame%s on project <magenta>%s</>?",
 					taskName,
 					numFrames,
@@ -155,7 +155,7 @@ var TaskCmds = &cli.Command{
 					s = ""
 				}
 
-				if !dialog.Confirm(color.Sprintf(
+				if !presenter.Confirm(color.Sprintf(
 					"Merge %d frame%s from <magenta>%s</> <blue>%s</> into <magenta>%s</> <blue>%s</>?",
 					numFrames,
 					s,
