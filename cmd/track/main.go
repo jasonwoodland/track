@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/jasonwoodland/track/cmd/track/cmd"
 	"github.com/jasonwoodland/track/pkg/cleanup"
+	"github.com/jasonwoodland/track/pkg/cmd"
 	"github.com/jasonwoodland/track/pkg/db"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/urfave/cli/v2"
