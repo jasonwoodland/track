@@ -35,9 +35,10 @@ func main() {
 	}()
 
 	app := &cli.App{
-		Name:                 "track",
-		Usage:                "Track time for projects and tasks",
-		EnableBashCompletion: true,
+		Name:                   "track",
+		Usage:                  "Track time for projects and tasks",
+		EnableBashCompletion:   true,
+		UseShortOptionHandling: true,
 
 		Commands: cli.Commands{
 			cmd.Start,
