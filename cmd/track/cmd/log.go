@@ -69,6 +69,10 @@ var Log = &cli.Command{
 					where
 						t2.project_id = p.id
 					and
+						start_time > ?
+					and
+						end_time < ?
+					and
 						end_time not like '0001-%'
 				) as project_total
 			from frame f
@@ -77,7 +81,11 @@ var Log = &cli.Command{
 			group by task_id
 			`
 
-		var params []interface{}
+		params := []interface{}{
+			from.Format(time.RFC3339),
+			to.Format(time.RFC3339),
+		}
+
 		var whereConds []string
 
 		whereConds = append(whereConds, "start_date > ?")
@@ -121,6 +129,8 @@ var Log = &cli.Command{
 			projectDuration time.Duration
 		}
 
+		var totalDuration time.Duration
+
 		for rows.Next() {
 			r := row{}
 			rows.Scan(
@@ -136,6 +146,8 @@ var Log = &cli.Command{
 			r.totalDuration *= time.Second
 			r.taskDuration *= time.Second
 			r.projectDuration *= time.Second
+
+			totalDuration += r.taskDuration
 
 			if r.projectName != prevProject {
 				hours := r.projectDuration.Hours()
@@ -175,6 +187,7 @@ var Log = &cli.Command{
 			}
 		}
 		fmt.Println()
+		fmt.Printf("%s total\n", util.GetHours(totalDuration))
 		return nil
 	},
 }
