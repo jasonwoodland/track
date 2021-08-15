@@ -42,6 +42,7 @@ func main() {
 
 		Commands: cli.Commands{
 			cmd.Start,
+			cmd.Shift,
 			cmd.Cancel,
 			cmd.Stop,
 			cmd.Add,
