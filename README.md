@@ -30,7 +30,7 @@ curl "https://raw.githubusercontent.com/jasonwoodland/track/main/completion/_tra
 - [x] report `--csv` output
 - [x] sql migrations
 - [x] add `frame move project task frame new_project new_task` command
-- [ ] add `shift` command to alter the start time of the running task eg `t shift -5m` advances the start time by 5 minutes
+- [x] add `shift` command to alter the start time of the running task eg `t shift -5m` advances the start time by 5 minutes
 - [x] refactor: normalize output/logging
-- [ ] create convenience functions for printProject, printTask, printFrame
+- [ ] refactor create convenience functions for printProject, printTask, printFrame
 - [ ] fix timeline: if a frame spans over two dates, it is not included
