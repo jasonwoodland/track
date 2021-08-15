@@ -61,7 +61,19 @@ var Log = &cli.Command{
 				-- in the results
 				min(start_time) as start_date,
 				max(end_time) as end_date,
-				sum(strftime("%s", end_time) - strftime("%s", start_time)) task_total,
+				(
+					select
+						sum(strftime("%s", end_time) - strftime("%s", start_time)) as total
+					from frame f2
+					where
+						f2.task_id = t.id
+					and
+						start_time > ?
+					and
+						end_time < ?
+					and
+						end_time not like '0001-%'
+				) as task_total,
 				(
 					select
 						sum(strftime("%s", end_time) - strftime("%s", start_time)) as total
@@ -85,14 +97,16 @@ var Log = &cli.Command{
 		params := []interface{}{
 			from.Format(time.RFC3339),
 			to.Format(time.RFC3339),
+			from.Format(time.RFC3339),
+			to.Format(time.RFC3339),
 		}
 
 		var whereConds []string
 
-		whereConds = append(whereConds, "start_date > ?")
+		whereConds = append(whereConds, "start_time > ?")
 		params = append(params, from.Format(time.RFC3339))
 
-		whereConds = append(whereConds, "end_date < ?")
+		whereConds = append(whereConds, "end_time < ?")
 		params = append(params, to.Format(time.RFC3339))
 
 		if p := c.Args().Get(0); p != "" {
