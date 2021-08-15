@@ -21,7 +21,7 @@ var Add = &cli.Command{
 		&cli.StringFlag{
 			Name:    "offset",
 			Aliases: []string{"o"},
-			Usage:   "Duration to offset the start and time by (eg. --offset -5m; add a frame which finished 5 minutes ago)",
+			Usage:   "Duration to offset the frame by (eg. -o -5m will add a frame that finished 5 minutes ago)",
 		},
 	},
 	Action: func(c *cli.Context) error {
