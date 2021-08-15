@@ -44,6 +44,7 @@ func main() {
 			cmd.Start,
 			cmd.Cancel,
 			cmd.Stop,
+			cmd.Add,
 			cmd.Timeline,
 			cmd.Log,
 			cmd.Status,
