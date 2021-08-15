@@ -9,6 +9,7 @@ import (
 	"github.com/jasonwoodland/track/pkg/db"
 	"github.com/jasonwoodland/track/pkg/model"
 	"github.com/jasonwoodland/track/pkg/util"
+	"github.com/jasonwoodland/track/pkg/view"
 	"github.com/urfave/cli/v2"
 )
 
@@ -51,14 +52,14 @@ var Stop = &cli.Command{
 			fmt.Println("No task started")
 		} else {
 			color.Printf(
-				"Stopped: <magenta>%s</> <blue>%s</> (%s, %s total)\n",
+				view.StoppedProjectTaskElapsedTotal,
 				state.Task.Project.Name,
 				state.Task.Name,
 				util.GetHours(state.TimeElapsed),
 				util.GetHours(state.Task.GetTotal()),
 			)
 			color.Printf(
-				"Finished at <green>%s</> (%s)\n",
+				view.FinishedAtTimeElapsed,
 				endTime.Format("15:04"),
 				state.TimeElapsed.Round(time.Second),
 			)

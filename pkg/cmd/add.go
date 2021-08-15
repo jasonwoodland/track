@@ -9,6 +9,7 @@ import (
 	"github.com/jasonwoodland/track/pkg/db"
 	"github.com/jasonwoodland/track/pkg/model"
 	"github.com/jasonwoodland/track/pkg/util"
+	"github.com/jasonwoodland/track/pkg/view"
 	"github.com/urfave/cli/v2"
 )
 
@@ -40,13 +41,13 @@ var Add = &cli.Command{
 
 		project := model.GetProjectByName(projectName)
 		if project == nil {
-			color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
+			color.Printf(view.ProjectDoesNotExist, projectName)
 			return nil
 		}
 
 		task := project.GetTask(taskName)
 		if task == nil {
-			color.Printf("Adding task <blue>%s</>\n", taskName)
+			color.Printf(view.AddedTask, taskName)
 			task = project.AddTask(taskName)
 		}
 
@@ -66,7 +67,7 @@ var Add = &cli.Command{
 		)
 
 		color.Printf(
-			"Added: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
+			view.AddedProjectTaskDurationTotal,
 			project.Name,
 			task.Name,
 			util.GetHours(duration),
@@ -74,7 +75,7 @@ var Add = &cli.Command{
 		)
 
 		color.Printf(
-			"  <gray>[%v]</> <green>%s - %s</> <default>(%s)</>\n",
+			view.FrameTimesDuration,
 			task.GetNumFrames()-1,
 			startTime.Format("Mon Jan 02 15:04"),
 			endTime.Format("15:04"),

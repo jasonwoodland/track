@@ -11,6 +11,7 @@ import (
 	"github.com/jasonwoodland/track/pkg/model"
 	"github.com/jasonwoodland/track/pkg/presenter"
 	"github.com/jasonwoodland/track/pkg/util"
+	"github.com/jasonwoodland/track/pkg/view"
 	"github.com/urfave/cli/v2"
 )
 
@@ -47,19 +48,19 @@ var FrameCmds = &cli.Command{
 
 				project := model.GetProjectByName(projectName)
 				if project == nil {
-					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
+					color.Printf(view.ProjectDoesNotExist, projectName)
 					return nil
 				}
 
 				task := project.GetTask(taskName)
 				if task == nil {
-					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
+					color.Printf(view.TaskDoesNotExistForProject, taskName, projectName)
 					return nil
 				}
 
 				frames := task.GetFrames()
 				if frameIndex > len(frames) {
-					color.Printf("Frame <gray>[%v]</> doesn't exist on task <blue>%s</>, on project <magenta>%s</>\n", frameIndex, taskName, projectName)
+					color.Printf(view.FrameDoesNotExistForProjectTask, frameIndex, projectName, taskName)
 					return nil
 				}
 
@@ -74,10 +75,10 @@ var FrameCmds = &cli.Command{
 				}
 
 				// TODO 00:00 shown if the frame is currently running.
-				color.Printf("Project: <magenta>%s</>\n", projectName)
-				color.Printf("  <blue>%s</>\n", taskName)
+				color.Printf(view.Project, projectName)
+				color.Printf(view.Task, taskName)
 				color.Printf(
-					"    <gray>[%v]</> <green>%s - %s</> (%s)\n",
+					view.FrameTimesDuration,
 					frameIndex,
 					frame.StartTime.Format("Mon Jan 02 15:04"),
 					frame.EndTime.Format("15:04"),
@@ -111,24 +112,24 @@ var FrameCmds = &cli.Command{
 
 				project := model.GetProjectByName(projectName)
 				if project == nil {
-					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
+					color.Printf(view.ProjectDoesNotExist, projectName)
 					return nil
 				}
 
 				task := project.GetTask(taskName)
 				if task == nil {
-					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
+					color.Printf(view.TaskDoesNotExistForProject, taskName, projectName)
 					return nil
 				}
 
 				frames := task.GetFrames()
 				if frameIndex > len(frames)-1 {
-					color.Printf("Frame <gray>[%v]</> doesn't exist on <magenta>%s</> <blue>%s</>\n", frameIndex, taskName, projectName)
+					color.Printf(view.FrameDoesNotExistForProjectTask, frameIndex, projectName, taskName)
 					return nil
 				}
 
 				if !presenter.Confirm(color.Sprintf(
-					"Remove frame <green>%s - %s</> on <magenta>%s</> <blue>%s</>?",
+					view.ConfirmDeleteFrameTimeProjectTask,
 					frames[frameIndex].StartTime.Format("Mon Jan 02 15:04"),
 					frames[frameIndex].EndTime.Format("15:04"),
 					projectName,
@@ -143,7 +144,7 @@ var FrameCmds = &cli.Command{
 					frame.Id,
 				)
 
-				color.Println("Removed")
+				color.Println(view.Deleted)
 
 				return nil
 			},
@@ -168,37 +169,37 @@ var FrameCmds = &cli.Command{
 
 				project := model.GetProjectByName(projectName)
 				if project == nil {
-					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
+					color.Printf(view.ProjectDoesNotExist, projectName)
 					return nil
 				}
 
 				task := project.GetTask(taskName)
 				if task == nil {
-					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", taskName, projectName)
+					color.Printf(view.TaskDoesNotExistForProject, taskName, projectName)
 					return nil
 				}
 
 				frames := task.GetFrames()
 				if frameIndex > len(frames)-1 {
-					color.Printf("Frame <gray>[%v]</> doesn't exist on <magenta>%s</> <blue>%s</>\n", frameIndex, taskName, projectName)
+					color.Printf(view.FrameDoesNotExistForProjectTask, frameIndex, projectName, taskName)
 					return nil
 				}
 
 				newProject := model.GetProjectByName(newProjectName)
 				if newProject == nil {
-					color.Printf("Project <magenta>%s</> doesn't exist\n", newProjectName)
+					color.Printf(view.ProjectDoesNotExist, newProjectName)
 					return nil
 				}
 
 				newTask := newProject.GetTask(newTaskName)
 				if task == nil {
-					color.Printf("Adding task <blue>%s</>\n", taskName)
+					color.Printf(view.AddedTask, taskName)
 					task = project.AddTask(taskName)
 				}
 
 				if !presenter.Confirm(
 					color.Sprintf(
-						"Move frame <green>%s - %s</> from <magenta>%s</> <blue>%s</> to <magenta>%s</> <blue>%s</>?",
+						view.ConfirmMoveFrameTimesFromToProjectTask,
 						frames[frameIndex].StartTime.Format("Mon Jan 02 15:04"),
 						frames[frameIndex].EndTime.Format("Mon Jan 02"),
 						projectName,
@@ -218,7 +219,7 @@ var FrameCmds = &cli.Command{
 					frame.Id,
 				)
 
-				fmt.Println("Moved")
+				fmt.Println(view.Moved)
 
 				return nil
 			},

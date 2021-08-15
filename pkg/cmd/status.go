@@ -8,6 +8,7 @@ import (
 	"github.com/jasonwoodland/track/pkg/completion"
 	"github.com/jasonwoodland/track/pkg/model"
 	"github.com/jasonwoodland/track/pkg/util"
+	"github.com/jasonwoodland/track/pkg/view"
 	"github.com/urfave/cli/v2"
 )
 
@@ -32,13 +33,13 @@ var Status = &cli.Command{
 				return
 			}
 			color.Printf(
-				"Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
+				view.RunningProjectTaskElapsedTotal,
 				state.Task.Project.Name,
 				state.Task.Name,
 				util.GetHours(state.TimeElapsed),
 				util.GetHours(state.Task.GetTotal()+state.TimeElapsed),
 			)
-			color.Printf("Started at <green>%s</> (%s ago)\033[K\n", state.StartTime.Format("15:04"), state.TimeElapsed.Round(time.Second))
+			color.Printf(view.StartedAtTimeElapsed, state.StartTime.Format("15:04"), state.TimeElapsed.Round(time.Second))
 		}
 
 		if c.Bool("watch") {

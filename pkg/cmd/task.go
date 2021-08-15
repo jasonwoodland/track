@@ -8,6 +8,7 @@ import (
 	"github.com/jasonwoodland/track/pkg/db"
 	"github.com/jasonwoodland/track/pkg/model"
 	"github.com/jasonwoodland/track/pkg/presenter"
+	"github.com/jasonwoodland/track/pkg/view"
 	"github.com/urfave/cli/v2"
 )
 
@@ -33,22 +34,22 @@ var TaskCmds = &cli.Command{
 				project := model.GetProjectByName(projectName)
 
 				if project == nil {
-					color.Printf("Project <magenta>%s</> doesn't exist\n", projectName)
+					color.Printf(view.ProjectDoesNotExist, projectName)
 					return nil
 				}
 
 				if project.GetTask(newName) != nil {
-					color.Printf("Task <blue>%s</> already exists on project <magenta>%s</>\n", newName, projectName)
+					color.Printf(view.TaskAlreadyExistsForProject, newName, projectName)
 					return nil
 				}
 
 				if project.GetTask(oldName) == nil {
-					color.Printf("Task <blue>%s</> doesn't exist on project <magenta>%s</>\n", oldName, projectName)
+					color.Printf(view.TaskDoesNotExistForProject, oldName, projectName)
 					return nil
 				}
 
 				db.Db.Exec("update task set name = $1 where name = $2 and project_id = $3", newName, oldName, project.Id)
-				color.Printf("Renamed task <blue>%s</> to <blue>%s</> on project <magenta>%s</>\n", oldName, newName, projectName)
+				color.Printf(view.RenamedTaskOnProject, oldName, newName, projectName)
 				return nil
 			},
 		},
@@ -69,14 +70,14 @@ var TaskCmds = &cli.Command{
 
 				project := model.GetProjectByName(projectName)
 				if project == nil {
-					color.Printf("Project <magenta>%s</> doesn't exists\n", projectName)
+					color.Printf(view.ProjectDoesNotExist, projectName)
 					return nil
 				}
 
 				task := project.GetTask(taskName)
 
 				if task == nil {
-					color.Printf("Task <blue>%s</> doesn't exists on project <magenta>%s</>\n", taskName, projectName)
+					color.Printf(view.TaskDoesNotExistForProject, taskName, projectName)
 					return nil
 				}
 
@@ -87,7 +88,7 @@ var TaskCmds = &cli.Command{
 				}
 
 				if !presenter.Confirm(color.Sprintf(
-					"Delete task <blue>%s</> and %d frame%s on project <magenta>%s</>?",
+					view.ConfirmDeleteTaskFramesOnProject,
 					taskName,
 					numFrames,
 					s,
@@ -97,13 +98,7 @@ var TaskCmds = &cli.Command{
 				}
 
 				db.Db.Exec("delete from task where name = $1 and project_id = $2", taskName, project.Id)
-				color.Printf(
-					"Deleted task <blue>%s</> and %d frame%s on project <magenta>%s</>\n",
-					taskName,
-					numFrames,
-					s,
-					projectName,
-				)
+				color.Println(view.Deleted)
 				return nil
 			},
 		},
@@ -125,27 +120,27 @@ var TaskCmds = &cli.Command{
 
 				fromProject := model.GetProjectByName(fromProjectName)
 				if fromProject == nil {
-					color.Printf("Project <magenta>%s</> doesn't exists\n", fromProjectName)
+					color.Printf(view.ProjectDoesNotExist, fromProjectName)
 					return nil
 				}
 
 				fromTask := fromProject.GetTask(fromTaskName)
 
 				if fromTask == nil {
-					color.Printf("Task <blue>%s</> doesn't exists on project <magenta>%s</>\n", fromTaskName, fromProjectName)
+					color.Printf(view.TaskDoesNotExistForProject, fromTaskName, fromProjectName)
 					return nil
 				}
 
 				toProject := model.GetProjectByName(toProjectName)
 				if toProject == nil {
-					color.Printf("Project <magenta>%s</> doesn't exists\n", toProjectName)
+					color.Printf(view.ProjectDoesNotExist, toProjectName)
 					return nil
 				}
 
 				toTask := toProject.GetTask(toTaskName)
 
 				if toTask == nil {
-					color.Printf("Task <blue>%s</> doesn't exists on project <magenta>%s</>\n", toTaskName, toProjectName)
+					color.Printf(view.TaskDoesNotExistForProject, toTaskName, toProjectName)
 					return nil
 				}
 
@@ -156,7 +151,7 @@ var TaskCmds = &cli.Command{
 				}
 
 				if !presenter.Confirm(color.Sprintf(
-					"Merge %d frame%s from <magenta>%s</> <blue>%s</> into <magenta>%s</> <blue>%s</>?",
+					view.ConfirmMergeFramesFromToProjectTask,
 					numFrames,
 					s,
 					fromProjectName,
@@ -176,7 +171,7 @@ var TaskCmds = &cli.Command{
 					log.Fatal(err)
 				}
 
-				color.Println("Merged")
+				color.Println(view.Merged)
 
 				return nil
 			},

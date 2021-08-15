@@ -6,6 +6,7 @@ import (
 	"github.com/jasonwoodland/track/pkg/db"
 	"github.com/jasonwoodland/track/pkg/model"
 	"github.com/jasonwoodland/track/pkg/presenter"
+	"github.com/jasonwoodland/track/pkg/view"
 	"github.com/urfave/cli/v2"
 )
 
@@ -24,11 +25,11 @@ var ProjectCmds = &cli.Command{
 					return nil
 				}
 				if model.GetProjectByName(name) != nil {
-					color.Printf("Project <magenta>%s</> already exists\n", name)
+					color.Printf(view.ProjectAlreadyExists, name)
 					return nil
 				}
 				db.Db.Exec("insert into project (name) values ($1)", name)
-				color.Printf("Added project <magenta>%s</>\n", name)
+				color.Printf(view.AddedProject, name)
 				return nil
 			},
 		},
@@ -45,11 +46,11 @@ var ProjectCmds = &cli.Command{
 					return nil
 				}
 				if model.GetProjectByName(oldName) == nil {
-					color.Printf("Project <magenta>%s</> doesn't exists\n", oldName)
+					color.Printf(view.ProjectDoesNotExist, oldName)
 					return nil
 				}
 				db.Db.Exec("update project set name = $1 where name = $2", newName, oldName)
-				color.Printf("Renamed project <magenta>%s</> to <magenta>%s</>\n", oldName, newName)
+				color.Printf(view.RenamedProject, oldName, newName)
 				return nil
 			},
 		},
@@ -67,16 +68,16 @@ var ProjectCmds = &cli.Command{
 				}
 
 				if model.GetProjectByName(name) == nil {
-					color.Printf("Project <magenta>%s</> doesn't exists\n", name)
+					color.Printf(view.ProjectDoesNotExist, name)
 					return nil
 				}
 
-				if !presenter.Confirm(color.Sprintf("Delete project <magenta>%s</>?", name), false) {
+				if !presenter.Confirm(color.Sprintf(view.ConfirmDeleteProject, name), false) {
 					return nil
 				}
 
 				db.Db.Exec("delete from project where name = $1", name)
-				color.Printf("Deleted project <magenta>%s</>\n", name)
+				color.Printf(view.DeletedProject, name)
 				return nil
 			},
 		},

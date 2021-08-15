@@ -11,6 +11,7 @@ import (
 	"github.com/jasonwoodland/track/pkg/db"
 	"github.com/jasonwoodland/track/pkg/mytime"
 	"github.com/jasonwoodland/track/pkg/util"
+	"github.com/jasonwoodland/track/pkg/view"
 	"github.com/urfave/cli/v2"
 )
 
@@ -125,11 +126,11 @@ var Report = &cli.Command{
 					if lastProjectName != "" {
 						color.Println()
 					}
-					color.Printf("Project: <magenta>%s</>\n", r.projectName)
+					color.Printf(view.Project, r.projectName)
 				}
 
 				color.Printf(
-					"  <green>%s - %s</> %6s <blue>%-*s</>\n",
+					view.FrameTimesDurationTask,
 					r.startDate.Format("Mon Jan 02"),
 					r.endDate.Format("Mon Jan 02"),
 					util.GetHours(r.taskDuration),

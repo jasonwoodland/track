@@ -10,6 +10,7 @@ import (
 	"github.com/jasonwoodland/track/pkg/db"
 	"github.com/jasonwoodland/track/pkg/model"
 	"github.com/jasonwoodland/track/pkg/util"
+	"github.com/jasonwoodland/track/pkg/view"
 	"github.com/urfave/cli/v2"
 )
 
@@ -51,13 +52,13 @@ var Start = &cli.Command{
 
 		project := model.GetProjectByName(projectName)
 		if project == nil {
-			color.Printf("Project <magenta>%s</> doesn't exists\n", projectName)
+			color.Printf(view.ProjectDoesNotExist, projectName)
 			return nil
 		}
 
 		task := project.GetTask(taskName)
 		if task == nil {
-			color.Printf("Adding task <blue>%s</>\n", taskName)
+			color.Printf(view.AddedTask, taskName)
 			task = project.AddTask(taskName)
 		}
 
@@ -84,13 +85,17 @@ var Start = &cli.Command{
 					return
 				}
 				color.Printf(
-					"Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
+					view.RunningProjectTaskElapsedTotal,
 					state.Task.Project.Name,
 					state.Task.Name,
 					util.GetHours(state.TimeElapsed),
 					util.GetHours(state.Task.GetTotal()+state.TimeElapsed),
 				)
-				color.Printf("Started at <green>%s</> (%s ago)\033[K\n", state.StartTime.Format("15:04"), state.TimeElapsed.Round(time.Second))
+				color.Printf(
+					view.StartedAtTimeElapsed,
+					state.StartTime.Format("15:04"),
+					state.TimeElapsed.Round(time.Second),
+				)
 			}
 
 			cleanup.SetCleanupFn(func() {
@@ -107,17 +112,22 @@ var Start = &cli.Command{
 			if ago != 0 {
 				state := model.GetState()
 				color.Printf(
-					"Running: <magenta>%s</> <blue>%s</> (%s, %s total)\033[K\n",
+					view.RunningProjectTaskElapsedTotal,
 					project.Name,
 					task.Name,
 					util.GetHours(state.TimeElapsed),
 					util.GetHours(state.Task.GetTotal()+state.TimeElapsed),
 				)
 			} else {
-				color.Printf("Running: <magenta>%s</> <blue>%s</> (%s)\n", project.Name, task.Name, util.GetHours(task.GetTotal()))
+				color.Printf(
+					view.RunningProjectTaskTotal,
+					project.Name,
+					task.Name,
+					util.GetHours(task.GetTotal()),
+				)
 			}
 
-			color.Printf("Started at <green>%s</>\n", startTime.Format("15:04"))
+			color.Printf(view.StartedAtTime, startTime.Format("15:04"))
 		}
 
 		return nil
