@@ -42,18 +42,18 @@ func main() {
 
 		Commands: cli.Commands{
 			cmd.Start,
+			cmd.Status,
 			cmd.Shift,
-			cmd.Cancel,
 			cmd.Stop,
 			cmd.Add,
-			cmd.Timeline,
+			cmd.Cancel,
 			cmd.Log,
-			cmd.Status,
+			cmd.Report,
+			cmd.Timeline,
+			cmd.Projects,
 			cmd.ProjectCmds,
 			cmd.TaskCmds,
-			cmd.Projects,
 			cmd.FrameCmds,
-			cmd.Report,
 		},
 	}
 
