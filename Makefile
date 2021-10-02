@@ -1,7 +1,9 @@
 PHONY: build
 
+all: build
+
 build:
-	go build
+	go build cmd/track/main.go
 
 run:
 	go run .
