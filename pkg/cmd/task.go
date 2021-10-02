@@ -176,5 +176,56 @@ var TaskCmds = &cli.Command{
 				return nil
 			},
 		},
+		{
+			Name:         "set",
+			Usage:        "Set an option for a task",
+			ArgsUsage:    "project task",
+			BashComplete: completion.ProjectTaskCompletion,
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:    "monthly",
+					Aliases: []string{"m"},
+					Usage:   "Enable monthly reporting",
+				},
+				&cli.BoolFlag{
+					Name:    "no-monthly",
+					Aliases: []string{"M"},
+					Usage:   "Disable monthly reporting",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				if c.Args().Len() != 2 {
+					cli.ShowSubcommandHelp(c)
+					return nil
+				}
+
+				projectName := c.Args().Get(0)
+				taskName := c.Args().Get(1)
+
+				project := model.GetProjectByName(projectName)
+
+				if project == nil {
+					color.Printf(view.ProjectDoesNotExist, projectName)
+					return nil
+				}
+
+				if project.GetTask(taskName) == nil {
+					color.Printf(view.TaskDoesNotExistForProject, taskName, projectName)
+					return nil
+				}
+
+				if c.Bool("monthly") {
+					db.Db.Exec("update task set monthly = true where name = $1 and project_id = $2", taskName, project.Id)
+					color.Println("Monthly reporting enabled")
+				}
+
+				if c.Bool("no-monthly") {
+					db.Db.Exec("update task set monthly = false where name = $1 and project_id = $2", taskName, project.Id)
+					color.Println("Monthly reporting disabled")
+				}
+
+				return nil
+			},
+		},
 	},
 }

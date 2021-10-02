@@ -33,19 +33,36 @@ var Report = &cli.Command{
 			select
 				p.name,
 				t.name,
-				min(f.start_time) start_time,
-				max(f.end_time) end_time,
-				sum(strftime("%s", end_time) - strftime("%s", start_time)) total
+				iif(
+					t.monthly,
+					(select min(start_time) from frame where task_id = t.id and end_time > ?),
+					min(f.start_time)
+				) start_time,
+				iif(
+					t.monthly,
+				    (select max(end_time) from frame where task_id = t.id and end_time < ?),
+					max(f.end_time)
+				) end_time,
+				iif(
+					t.monthly,
+					sum(case when start_time > ? and end_time < ? then strftime("%s", end_time) - strftime("%s", start_time) else 0 end),
+					sum(strftime("%s", end_time) - strftime("%s", start_time))
+				) total,
+				monthly
 			from task t
 			left join frame f on f.task_id = t.id
 			left join project p on p.id = t.project_id
 			group by t.id
 			having
-				end_time > ? and end_time < ?
+				(end_time > ? and end_time < ?) or (monthly = true)
 			order by p.name, start_time;
 		`
 
 		params := []interface{}{
+			fromDate.Format(time.RFC3339),
+			toDate.Format(time.RFC3339),
+			fromDate.Format(time.RFC3339),
+			toDate.Format(time.RFC3339),
 			fromDate.Format(time.RFC3339),
 			toDate.Format(time.RFC3339),
 		}
@@ -61,6 +78,7 @@ var Report = &cli.Command{
 			startDate    time.Time
 			endDate      time.Time
 			taskDuration time.Duration
+			monthly      bool
 		}
 
 		if c.Bool("csv") {
@@ -85,12 +103,18 @@ var Report = &cli.Command{
 					(*mytime.Time)(&r.startDate),
 					(*mytime.Time)(&r.endDate),
 					&r.taskDuration,
+					&r.monthly,
 				)
 				r.taskDuration *= time.Second
 
+				marker := ""
+				if r.monthly {
+					marker = "*"
+				}
+
 				if err := w.Write([]string{
 					r.projectName,
-					r.taskName,
+					r.taskName + marker,
 					r.startDate.Format("Mon Jan 02 2006"),
 					r.endDate.Format("Mon Jan 02 2006"),
 					fmt.Sprintf("%.2f", r.taskDuration.Hours()),
@@ -119,6 +143,7 @@ var Report = &cli.Command{
 					(*mytime.Time)(&r.startDate),
 					(*mytime.Time)(&r.endDate),
 					&r.taskDuration,
+					&r.monthly,
 				)
 				r.taskDuration *= time.Second
 
@@ -129,13 +154,18 @@ var Report = &cli.Command{
 					color.Printf(view.Project, r.projectName)
 				}
 
+				marker := ""
+				if r.monthly {
+					marker = "*"
+				}
+
 				color.Printf(
 					view.FrameTimesDurationTask,
 					r.startDate.Format("Mon Jan 02"),
 					r.endDate.Format("Mon Jan 02"),
 					util.GetHours(r.taskDuration),
 					50,
-					r.taskName,
+					r.taskName+marker,
 				)
 
 				lastProjectName = r.projectName
