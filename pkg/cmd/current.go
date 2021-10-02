@@ -13,11 +13,35 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+type command int
+
+const (
+	add command = iota
+	sub
+)
+
 var Shift = &cli.Command{
-	Name:      "shift",
-	Usage:     "Shift the start time of a running task",
-	ArgsUsage: "-- duration",
-	Action: func(c *cli.Context) error {
+	Name:    "current",
+	Aliases: []string{"cur"},
+	Usage:   "Adjust the current running task",
+	Subcommands: []*cli.Command{
+		{
+			Name:      "add",
+			Usage:     "Add to the running duration",
+			ArgsUsage: "duration",
+			Action:    actionForCommand(add),
+		},
+		{
+			Name:      "sub",
+			Usage:     "Subtract from the running duration",
+			ArgsUsage: "duration",
+			Action:    actionForCommand(sub),
+		},
+	},
+}
+
+func actionForCommand(cmd command) func(*cli.Context) error {
+	return func(c *cli.Context) error {
 		if c.Args().Len() != 1 {
 			cli.ShowSubcommandHelp(c)
 			return nil
@@ -32,7 +56,16 @@ var Shift = &cli.Command{
 			return nil
 		}
 
-		newStartTime := state.StartTime.Add(0 - duration)
+		prevTimeElapsed := state.TimeElapsed
+		prevTaskTotal := state.Task.GetTotal()
+		prevStartTime := state.StartTime
+		var newStartTime time.Time
+
+		if cmd == add {
+			newStartTime = state.StartTime.Add(0 - duration)
+		} else if cmd == sub {
+			newStartTime = state.StartTime.Add(duration)
+		}
 
 		res, err := db.Db.Exec(
 			"update frame set start_time = $1 where end_time is null",
@@ -49,18 +82,22 @@ var Shift = &cli.Command{
 		state = model.GetState()
 
 		color.Printf(
-			view.RunningProjectTaskElapsedTotal,
+			view.RunningProjectTaskPrevElapsedTotal,
 			state.Task.Project.Name,
 			state.Task.Name,
+			util.GetHours(prevTimeElapsed),
 			util.GetHours(state.TimeElapsed),
+			util.GetHours(prevTaskTotal),
 			util.GetHours(state.Task.GetTotal()),
 		)
 		color.Printf(
-			view.StartedAtTimeElapsed,
+			view.StartedAtPrevTimeElapsed,
+			prevStartTime.Format("15:04"),
 			state.StartTime.Format("15:04"),
+			prevTimeElapsed.Round(time.Second),
 			state.TimeElapsed.Round(time.Second),
 		)
 
 		return nil
-	},
+	}
 }

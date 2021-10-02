@@ -65,7 +65,7 @@ func (t *Task) GetFrames() (frames []*Frame) {
 func (t *Task) GetTotal() (d time.Duration) {
 	rows, err := db.Db.Query(`
 		select
-			sum(strftime("%s", end_time) - strftime("%s", start_time)) as total
+			sum(strftime("%s", coalesce(end_time, datetime('now'))) - strftime("%s", start_time)) as total
 		from frame
 		where task_id = $1
 	`, t.Id)
