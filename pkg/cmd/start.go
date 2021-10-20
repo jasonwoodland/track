@@ -89,7 +89,7 @@ var Start = &cli.Command{
 					state.Task.Project.Name,
 					state.Task.Name,
 					util.GetHours(state.TimeElapsed),
-					util.GetHours(state.Task.GetTotal()+state.TimeElapsed),
+					util.GetHours(state.Task.GetTotal()),
 				)
 				color.Printf(
 					view.StartedAtTimeElapsed,
@@ -116,7 +116,7 @@ var Start = &cli.Command{
 					project.Name,
 					task.Name,
 					util.GetHours(state.TimeElapsed),
-					util.GetHours(state.Task.GetTotal()+state.TimeElapsed),
+					util.GetHours(state.Task.GetTotal()),
 				)
 			} else {
 				color.Printf(

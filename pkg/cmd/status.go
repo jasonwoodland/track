@@ -37,7 +37,7 @@ var Status = &cli.Command{
 				state.Task.Project.Name,
 				state.Task.Name,
 				util.GetHours(state.TimeElapsed),
-				util.GetHours(state.Task.GetTotal()+state.TimeElapsed),
+				util.GetHours(state.Task.GetTotal()),
 			)
 			color.Printf(view.StartedAtTimeElapsed, state.StartTime.Format("15:04"), state.TimeElapsed.Round(time.Second))
 		}
