@@ -19,7 +19,7 @@ $ go get github.com/jasonwoodland/track/cmd/...
 For ZSH completion, you need to copy `completion/_track` somewhere into your `$fpath`.
 
 ```sh
-curl "https://raw.githubusercontent.com/jasonwoodland/track/main/completion/_track" > /opt/homebrew/share/zsh/site-functions/_track
+curl "https://raw.githubusercontent.com/jasonwoodland/track/main/completion/_track" > ~/.zsh/completion/_track
 ```
 
 ## Todo
