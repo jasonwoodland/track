@@ -9,6 +9,7 @@ import (
 	"github.com/jasonwoodland/track/pkg/completion"
 	"github.com/jasonwoodland/track/pkg/db"
 	"github.com/jasonwoodland/track/pkg/model"
+	"github.com/jasonwoodland/track/pkg/presenter"
 	"github.com/jasonwoodland/track/pkg/util"
 	"github.com/jasonwoodland/track/pkg/view"
 	"github.com/urfave/cli/v2"
@@ -44,12 +45,6 @@ var Start = &cli.Command{
 			return nil
 		}
 
-		state := model.GetState()
-		if state != nil && state.Running {
-			fmt.Println("Task already running")
-			return nil
-		}
-
 		project := model.GetProjectByName(projectName)
 		if project == nil {
 			color.Printf(view.ProjectDoesNotExist, projectName)
@@ -57,6 +52,29 @@ var Start = &cli.Command{
 		}
 
 		task := project.GetTask(taskName)
+
+		state := model.GetState()
+		if state != nil && state.Running {
+			color.Printf(
+				view.AlreadyRunningProjectTaskElapsedTotal,
+				state.Task.Project.Name,
+				state.Task.Name,
+				util.GetHours(state.TimeElapsed),
+				util.GetHours(state.Task.GetTotal()),
+			)
+			color.Printf(
+				view.StartedAtTimeElapsed,
+				state.StartTime.Format("15:04"),
+				state.TimeElapsed.Round(time.Second),
+			)
+			if task != nil && state.Task.Id == task.Id {
+				return nil
+			}
+			if !presenter.Confirm(view.ConfirmStopRunningTask, true) {
+				return nil
+			}
+		}
+
 		if task == nil {
 			color.Printf(view.AddedTask, taskName)
 			task = project.AddTask(taskName)
