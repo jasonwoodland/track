@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/gookit/color"
@@ -70,7 +71,28 @@ var Start = &cli.Command{
 			if task != nil && state.Task.Id == task.Id {
 				return nil
 			}
-			if !presenter.Confirm(view.ConfirmStopRunningTask, true) {
+			if presenter.Confirm(view.ConfirmStopRunningTask, true) {
+				_, err := db.Db.Exec(
+					"update frame set end_time = $1 where end_time is null",
+					startTime.Format(time.RFC3339),
+				)
+				if err != nil {
+					log.Fatal(err)
+				}
+				color.Printf(
+					view.StoppedProjectTaskElapsedTotal,
+					state.Task.Project.Name,
+					state.Task.Name,
+					util.GetHours(state.TimeElapsed),
+					util.GetHours(state.Task.GetTotal()),
+				)
+				color.Printf(
+					view.FinishedAtTimeElapsed,
+					startTime.Format("15:04"),
+					state.TimeElapsed.Round(time.Second),
+				)
+
+			} else {
 				return nil
 			}
 		}
