@@ -54,7 +54,7 @@ var Report = &cli.Command{
 			left join project p on p.id = t.project_id
 			group by t.id
 			having
-				(end_time > ? and end_time < ?) or (monthly = true)
+				(end_time > ? and end_time < ?) or (monthly = true and total > 0)
 			order by p.name, start_time;
 		`
 
