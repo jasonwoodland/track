@@ -24,47 +24,62 @@ var Report = &cli.Command{
 			Name:  "csv",
 			Usage: "Output CSV format",
 		},
+		&cli.BoolFlag{
+			Name:    "monthly",
+			Aliases: []string{"m"},
+			Usage:   "Output monthly tracked hours",
+		},
 	},
 	Action: func(c *cli.Context) error {
-		fromDate := util.MonthFromShorthand(c.Args().Get(0))
-		toDate := time.Date(fromDate.Year(), fromDate.Month()+1, 1, 0, 0, 0, 0, time.UTC)
+		var (
+			fromDate = util.MonthFromShorthand(c.Args().Get(0))
+			toDate   = time.Date(fromDate.Year(), fromDate.Month()+1, 1, 0, 0, 0, 0, time.UTC)
+			query    string
+			params   []interface{}
+			monthly  = c.Bool("monthly")
+		)
 
-		query := `
+		query = `
 			select
 				p.name,
 				t.name,
 				iif(
-					t.monthly,
+					t.monthly or ?,
 					(select min(start_time) from frame where task_id = t.id and end_time > ?),
 					min(f.start_time)
 				) start_time,
 				iif(
-					t.monthly,
+					t.monthly or ?,
 				    (select max(end_time) from frame where task_id = t.id and end_time < ?),
 					max(f.end_time)
 				) end_time,
 				iif(
-					t.monthly,
+					t.monthly or ?,
 					sum(case when start_time > ? and end_time < ? then strftime("%s", end_time) - strftime("%s", start_time) else 0 end),
 					sum(strftime("%s", end_time) - strftime("%s", start_time))
 				) total,
-				monthly
+				(t.monthly or ?) monthly
 			from task t
 			left join frame f on f.task_id = t.id
 			left join project p on p.id = t.project_id
 			group by t.id
 			having
-				(end_time > ? and end_time < ?) or (monthly = true and total > 0)
+				(end_time > ? and end_time < ?) or ((monthly or ?) = true and total > 0)
 			order by p.name, start_time;
 		`
 
-		params := []interface{}{
+		params = []interface{}{
+			monthly,
+			fromDate.Format(time.RFC3339),
+			monthly,
+			toDate.Format(time.RFC3339),
+			monthly,
 			fromDate.Format(time.RFC3339),
 			toDate.Format(time.RFC3339),
+			monthly,
 			fromDate.Format(time.RFC3339),
 			toDate.Format(time.RFC3339),
-			fromDate.Format(time.RFC3339),
-			toDate.Format(time.RFC3339),
+			monthly,
 		}
 
 		rows, err := db.Db.Query(query, params...)
