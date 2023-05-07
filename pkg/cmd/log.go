@@ -25,11 +25,11 @@ var Log = &cli.Command{
 		&cli.StringFlag{
 			Name:    "from",
 			Aliases: []string{"f"},
-			Usage:   "Start date from which to include tasks (TODO)",
+			Usage:   "Start date from which to include frames",
 		},
 		&cli.StringFlag{
 			Name:    "to",
-			Usage:   "End date from which to include tasks (TODO)",
+			Usage:   "End date from which to include frames",
 			Aliases: []string{"t"},
 		},
 		&cli.BoolFlag{
@@ -63,51 +63,57 @@ var Log = &cli.Command{
 				max(end_time) as end_date,
 				(
 					select
-						sum(strftime("%s", end_time) - strftime("%s", start_time)) as total
+						sum(strftime("%s", f2.end_time) - strftime("%s", f2.start_time)) as total
 					from frame f2
 					where
 						f2.task_id = t.id
 					and
-						start_time > ?
+						f2.end_time >= ?
 					and
-						end_time < ?
+						f2.end_time <= ?
 					and
-						end_time not like '0001-%'
+						f2.end_time not like '0001-%'
 				) as task_total,
 				(
 					select
-						sum(strftime("%s", end_time) - strftime("%s", start_time)) as total
+						sum(strftime("%s", f2.end_time) - strftime("%s", f2.start_time)) as total
 					from frame f2
 					left join task t2 on t2.id = task_id
 					where
 						t2.project_id = p.id
 					and
-						start_time > ?
+						f2.end_time >= ?
 					and
-						end_time < ?
+						f2.end_time <= ?
 					and
-						end_time not like '0001-%'
+						f2.end_time not like '0001-%'
 				) as project_total
 			from frame f
 			left join task t on t.id = task_id
 			left join project p on p.id = t.project_id
+			where
+				f.end_time >= ?
+			and
+				f.end_time <= ?
 			group by task_id
 			`
 
 		params := []interface{}{
-			from.Format(time.RFC3339),
-			to.Format(time.RFC3339),
-			from.Format(time.RFC3339),
-			to.Format(time.RFC3339),
+			from.Format("2006-01-02"),
+			to.Format("2006-01-02"),
+			from.Format("2006-01-02"),
+			to.Format("2006-01-02"),
+			from.Format("2006-01-02"),
+			to.Format("2006-01-02"),
 		}
 
 		var whereConds []string
 
-		whereConds = append(whereConds, "start_time > ?")
-		params = append(params, from.Format(time.RFC3339))
+		whereConds = append(whereConds, "f.end_time >= ?")
+		params = append(params, from.Format("2006-01-02"))
 
-		whereConds = append(whereConds, "end_time < ?")
-		params = append(params, to.Format(time.RFC3339))
+		whereConds = append(whereConds, "f.end_time <= ?")
+		params = append(params, to.Format("2006-01-02"))
 
 		if p := c.Args().Get(0); p != "" {
 			whereConds = append(whereConds, "p.name like ?")
@@ -199,10 +205,11 @@ var Log = &cli.Command{
 						util.GetHours(frame.EndTime.Sub(frame.StartTime)),
 					)
 				}
+				fmt.Println()
 			}
 		}
 		fmt.Println()
-		fmt.Printf("%s total\n", util.GetHours(totalDuration))
+		fmt.Printf(view.TotalHours, totalDuration.Hours())
 		return nil
 	},
 }
