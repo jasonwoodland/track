@@ -6,4 +6,4 @@ build:
 	go build ./cmd/track
 
 install:
-	GOBIN=/usr/local/bin go install ./cmd/track
+	go install ./cmd/track
