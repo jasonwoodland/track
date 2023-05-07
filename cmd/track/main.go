@@ -54,6 +54,7 @@ func main() {
 			cmd.ProjectCmds,
 			cmd.TaskCmds,
 			cmd.FrameCmds,
+			cmd.Daily,
 		},
 	}
 
