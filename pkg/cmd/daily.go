@@ -137,7 +137,7 @@ var Daily = &cli.Command{
 			r.totalDuration *= time.Second
 			r.taskDuration *= time.Second
 			r.projectDuration *= time.Second
-			dateFmt := "Mon Jan 02 2006"
+			dateFmt := "Mon Jan 02"
 
 			if prevDate != r.date {
 				if prevDate != (time.Time{}) {
@@ -147,8 +147,8 @@ var Daily = &cli.Command{
 				prevProj = ""
 				color.Printf(
 					view.DailyDateHours,
-					util.GetHours(r.totalDuration),
 					r.date.Format(dateFmt),
+					util.GetHours(r.totalDuration),
 				)
 			}
 

@@ -182,7 +182,7 @@ var Log = &cli.Command{
 			color.Printf(
 				view.FrameTimesDurationTask,
 				r.startDate.Format("Mon Jan 02"),
-				r.endDate.Format("Mon Jan 02"),
+				r.endDate.Format("Mon Jan 02 2006"),
 				util.GetHours(r.taskDuration),
 				50,
 				r.taskName,
